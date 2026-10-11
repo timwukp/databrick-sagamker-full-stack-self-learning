@@ -50,18 +50,21 @@ REQUIRED = [
     "data/manifest.json", "data/raw/pos_events.jsonl", "data/raw/promo_SEA.csv", "data/raw/sap_mard.csv",
     "labs/01_retail_medallion.py", "scripts/export_from_lab.mjs", "scripts/build_portal.py",
     "scripts/publish.sh", ".github/workflows/site-verify.yml",
+    "en/index.html", "en/lab/retail-3d.html", "i18n/en.json", "scripts/build_en.py",
+    "docs/en/use-case.md", "docs/en/data-walkthrough.md", "docs/en/databricks-vs-aws-mapping.md",
+    "docs/en/common-mistakes.md", "docs/en/talk-track.md", "docs/en/sources.md",
 ]
 for p in REQUIRED:
     check((ROOT / p).is_file(), f"structure: missing {p}")
 
 TOP_LEVEL = {".github", ".gitignore", ".nojekyll", "README.md", "index.html", "verify.py",
-             "data", "docs", "lab", "labs", "scripts", ".git"}
+             "data", "docs", "lab", "labs", "scripts", ".git", "en", "i18n"}
 for entry in ROOT.iterdir():
     if entry.name == ".DS_Store":
         continue
     check(entry.name in TOP_LEVEL, f"structure: unexpected top-level entry {entry.name} (would be published)")
 
-PAGES = ["index.html", "lab/retail-3d.html"]
+PAGES = ["index.html", "lab/retail-3d.html", "en/index.html", "en/lab/retail-3d.html"]
 
 
 class Collector(HTMLParser):
@@ -202,7 +205,19 @@ feat_aws = table("aws", step_no("fs_off"), "after")
 check([f"{r['store_id']}#{r['sku']}" for r in feat_dbx] == [r["store_sku"] for r in feat_aws], "numbers: feature group record ids do not match the feature table keys")
 
 # ---------- wording ----------
-PUBLISHED = PAGES + [str(p.relative_to(ROOT)) for p in (ROOT / "docs").glob("*.md")] + ["README.md"]
+PUBLISHED = PAGES + [str(p.relative_to(ROOT)) for p in (ROOT / "docs").rglob("*.md")] + ["README.md"]
+# English pages and docs: no Chinese at all, except the label of the link back to the Chinese site
+CJK = re.compile(r"[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]")
+for p in ["en/index.html", "en/lab/retail-3d.html"] + [str(x.relative_to(ROOT)) for x in (ROOT / "docs" / "en").glob("*.md")]:
+    left = CJK.findall(read(p).replace("中文", ""))
+    check(not left, f"wording: {p} still has Chinese text: {''.join(left[:20])}")
+    if p.endswith(".html"):
+        check('<html lang="en">' in read(p), f"wording: {p} should declare <html lang=\"en\">")
+for zh, en in (("index.html", "en/index.html"), ("lab/retail-3d.html", "en/lab/retail-3d.html")):
+    check('hreflang="en"' in read(zh), f"links: {zh} has no link to the English page")
+    check('hreflang="zh-Hant"' in read(en), f"links: {en} has no link back to the Chinese page")
+tr = json.loads(read("i18n/en.json"))
+check(all(not CJK.search(v) and '"' not in v for v in tr.values()), "wording: i18n/en.json has Chinese or straight double quotes in a translation")
 FORBIDDEN = [r"面試", r"\binterview", r"前東家", r"你的主場", r"\bHM\b", r"hiring manager"]
 for p in PUBLISHED:
     text = read(p)
@@ -234,7 +249,7 @@ if node:
     check(r.returncode == 0, "code: scripts/export_from_lab.mjs does not parse")
 else:
     print("note: node not found, skipped the JavaScript parse checks")
-for nb in ("labs/01_retail_medallion.py", "scripts/build_portal.py"):
+for nb in ("labs/01_retail_medallion.py", "scripts/build_portal.py", "scripts/build_en.py"):
     try:
         py_compile.compile(str(ROOT / nb), doraise=True, cfile=tempfile.mktemp())
         ok = True

@@ -28,6 +28,8 @@ jobs:
         run: |
           node scripts/export_from_lab.mjs
           python3 scripts/build_portal.py
-          git diff --exit-code -- data docs/data-walkthrough.md docs/databricks-vs-aws-mapping.md index.html
+          python3 scripts/build_en.py
+          node scripts/export_from_lab.mjs --lang en
+          git diff --exit-code -- data docs index.html en
       - name: Verify the site
         run: python3 verify.py

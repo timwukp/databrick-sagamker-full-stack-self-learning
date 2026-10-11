@@ -18,7 +18,14 @@ import vm from "node:vm";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const html = fs.readFileSync(path.join(ROOT, "lab", "retail-3d.html"), "utf8");
+const li = process.argv.indexOf("--lang");
+const LANG = li > 0 ? process.argv[li + 1] : "zh";   // "en": read en/lab, write docs/en, skip data/
+const EN = LANG === "en";
+const LAB_FILE = EN ? path.join(ROOT, "en", "lab", "retail-3d.html") : path.join(ROOT, "lab", "retail-3d.html");
+const DOCS = EN ? path.join(ROOT, "docs", "en") : path.join(ROOT, "docs");
+const LAB_LINK = EN ? "../../en/lab/retail-3d.html" : "../lab/retail-3d.html";
+const L = EN ? { changed: "What this step changed", key: "Key points" } : { changed: "這一步改了什麼", key: "學習重點" };
+const html = fs.readFileSync(LAB_FILE, "utf8");
 const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
 let main = scripts.find(s => s.includes("const DATA = {"));
 if (!main) throw new Error("data script not found in lab/retail-3d.html");
@@ -70,11 +77,11 @@ const cols = t => (t.cols || []).map(c => ({ name: c[0], type: c[1], tag: c[2] |
 const ensure = d => fs.mkdirSync(d, { recursive: true });
 
 // clean previous export
-for (const p of Object.values(PLATS)) fs.rmSync(path.join(ROOT, "data", p), { recursive: true, force: true });
+if (!EN) for (const p of Object.values(PLATS)) fs.rmSync(path.join(ROOT, "data", p), { recursive: true, force: true });
 
 const manifest = [];
 function writeObj(obj, plat, stepNo, id, role) {
-  if (!obj) return null;
+  if (!obj || EN) return null;
   const dir = path.join("data", PLATS[plat], `${String(stepNo).padStart(2, "0")}_${id.replace("p:", "layer_")}`);
   ensure(path.join(ROOT, dir));
   const base = `${role}_${slug(obj.name)}`;
@@ -105,7 +112,7 @@ function writeObj(obj, plat, stepNo, id, role) {
 let md = [];
 md.push("# Data walkthrough: every step, before and after", "",
   "Generated from `lab/retail-3d.html` by `scripts/export_from_lab.mjs`. The same content is interactive in the",
-  "[3D lab](../lab/retail-3d.html#data). Sample rows are synthetic; columns, types and system fields follow the official docs.", "",
+  `[3D lab](${LAB_LINK}#data). Sample rows are synthetic; columns, types and system fields follow the official docs.`, "",
   "Legend for row notes: duplicate, fails check, late, schema change, changed, look here, alert, superseded.", "");
 md.push("## Steps", "");
 STEP_ORDER.forEach((id, k) => md.push(`${k + 1}. [${stepTitle(id, "dbx")}](#step-${k + 1})`));
@@ -149,31 +156,32 @@ STEP_ORDER.forEach((id, k) => {
     md.push("#### Before", "", ...mdTable(d.in));
     md.push("#### After", "", ...mdTable(d.out));
     d.extra.forEach(t => md.push(...mdTable(t)));
-    md.push("#### 這一步改了什麼", "", d.why || "", "");
+    md.push(`#### ${L.changed}`, "", d.why || "", "");
     if (d.code) md.push(`#### Code (${d.code.lang})`, "", "```", d.code.text, "```", "");
-    md.push(`[Open this step in the 3D lab](../lab/retail-3d.html#step=${id}&plat=${plat})`, "");
+    md.push(`[Open this step in the 3D lab](${LAB_LINK}#step=${id}&plat=${plat})`, "");
   }
 });
-fs.writeFileSync(path.join(ROOT, "docs", "data-walkthrough.md"), md.join("\n"));
+fs.writeFileSync(path.join(DOCS, "data-walkthrough.md"), md.join("\n"));
 
 // ---- component map ----
 const map = ["# Databricks vs AWS: component map", "",
   "Generated from the 3D lab. Each row is one box in the diagram; the boxes sit in the same place on both stacks.", "",
-  "| step | Databricks | AWS | 學習重點 |", "|---|---|---|---|"];
+  `| step | Databricks | AWS | ${L.key} |`, "|---|---|---|---|"];
 const OWN = { dbx: "Databricks", aws: "AWS", oss: "open source / third party", cust: "customer system", out: "business outcome" };
 NODES.slice().sort((a, b) => a.s - b.s || a.l - b.l).forEach(n => {
   const a = info(n, "dbx"), b = info(n, "aws");
   const cell = i => `**${mdCell(i.t)}** (${OWN[i.o]})<br>${mdCell(i.d || "")}${i.doc ? `<br>[doc](${i.doc})` : ""}`;
   map.push(`| ${n.s + 1}. ${STAGES[n.s]} | ${cell(a)} | ${cell(b)} | ${mdCell(n.n || "")} |`);
 });
-map.push("", "## Layers under and over every step", "", "| layer | Databricks | AWS | 學習重點 |", "|---|---|---|---|");
+map.push("", "## Layers under and over every step", "", `| layer | Databricks | AWS | ${L.key} |`, "|---|---|---|---|");
 for (const g of ["ws", "gov", "store"]) {
   const t = pl => PLANES[pl].filter(x => x.group === g).map(x => `**${mdCell(x.t)}**<br>${mdCell(x.d)}${x.doc ? `<br>[doc](${x.doc})` : ""}`).join("<br><br>");
   map.push(`| ${GROUP_NAME[g]} | ${t("dbx")} | ${t("aws")} | ${mdCell(GROUP_NOTE[g])} |`);
 }
-fs.writeFileSync(path.join(ROOT, "docs", "databricks-vs-aws-mapping.md"), map.join("\n") + "\n");
+fs.writeFileSync(path.join(DOCS, "databricks-vs-aws-mapping.md"), map.join("\n") + "\n");
 
 // ---- raw source files used by labs/01_retail_medallion.py ----
+if (!EN) {
 ensure(path.join(ROOT, "data", "raw"));
 fs.writeFileSync(path.join(ROOT, "data", "raw", "pos_events.jsonl"),
   DATA.pos.out.items.map(it => JSON.stringify(it.obj)).join("\n") + "\n");
@@ -186,4 +194,5 @@ fs.writeFileSync(path.join(ROOT, "data", "manifest.json"), JSON.stringify({
   steps: STEP_ORDER.map((id, k) => ({ step_no: k + 1, step: id, title_databricks: stepTitle(id, "dbx"), title_aws: stepTitle(id, "aws") })),
   files: manifest }, null, 2) + "\n");
 
-console.log(`exported ${manifest.length} files across ${STEP_ORDER.length} steps`);
+}
+console.log(EN ? `exported English docs to docs/en` : `exported ${manifest.length} files across ${STEP_ORDER.length} steps`);
