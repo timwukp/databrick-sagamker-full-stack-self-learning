@@ -1,0 +1,24 @@
+{
+  "name": "Anomaly detection on schema retail.bronze (summary)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "table",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "freshness",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "completeness",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

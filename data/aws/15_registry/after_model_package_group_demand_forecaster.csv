@@ -1,0 +1,4 @@
+ModelPackageVersion,ModelApprovalStatus,ModelPackageArn,CreationTime
+6,Approved,arn:aws:sagemaker:…:model-package/demand-forecaster/6,2026-10-02 18:20:00
+7,Approved,arn:aws:sagemaker:…:model-package/demand-forecaster/7,2026-10-09 18:05:00
+8,PendingManualApproval,arn:aws:sagemaker:…:model-package/demand-forecaster/8,2026-10-10 03:05:00

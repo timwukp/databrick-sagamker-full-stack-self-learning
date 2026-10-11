@@ -1,0 +1,4 @@
+window,window_cmp,drift_type,column_name,population_stability_index,js_distance
+"{""start"":""2026-10-10"",""end"":""2026-10-11""}","{""start"":""2026-10-09"",""end"":""2026-10-10""}",CONSECUTIVE,discount_pct,0.41,0.29
+"{""start"":""2026-10-10"",""end"":""2026-10-11""}","{""start"":""2026-10-09"",""end"":""2026-10-10""}",CONSECUTIVE,units_15m,0.12,0.08
+"{""start"":""2026-10-10"",""end"":""2026-10-11""}",,BASELINE,p50,0.27,0.19

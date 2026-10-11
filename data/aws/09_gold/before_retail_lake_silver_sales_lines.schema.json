@@ -1,0 +1,78 @@
+{
+  "name": "s3tablescatalog/retail-lake.silver.sales_lines (one row per product line)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "event_id",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "line_no",
+      "type": "int",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "store_id",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "sku",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "qty",
+      "type": "int",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "unit_price",
+      "type": "decimal(10,2)",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "discount",
+      "type": "decimal(10,2)",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "net_amount",
+      "type": "decimal(12,2)",
+      "tag": null,
+      "note": "qty × price − discount"
+    },
+    {
+      "name": "currency",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "event_ts_utc",
+      "type": "timestamptz",
+      "tag": null,
+      "note": "local text + offset → UTC"
+    },
+    {
+      "name": "business_date",
+      "type": "date",
+      "tag": null,
+      "note": "the store's local date"
+    },
+    {
+      "name": "loyalty_id",
+      "type": "string",
+      "tag": null,
+      "note": "null for old POS firmware"
+    }
+  ]
+}

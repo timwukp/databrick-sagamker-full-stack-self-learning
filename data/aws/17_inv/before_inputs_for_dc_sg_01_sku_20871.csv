@@ -1,0 +1,6 @@
+item,value
+on_hand_eod (gold),1180
+open_po_qty (gold),600
+"p50, next 7 days (forecast)",452 + 468 + 441 + 288 + 275 + 262 + 270 = 2456
+safety_stock (policy),420
+case_pack (supplier terms),24

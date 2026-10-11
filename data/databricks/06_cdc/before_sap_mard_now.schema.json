@@ -1,0 +1,30 @@
+{
+  "name": "SAP MARD now (step 3)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "MATNR",
+      "type": "CHAR(18)",
+      "tag": "pk",
+      "note": null
+    },
+    {
+      "name": "WERKS",
+      "type": "CHAR(4)",
+      "tag": "pk",
+      "note": null
+    },
+    {
+      "name": "LGORT",
+      "type": "CHAR(4)",
+      "tag": "pk",
+      "note": null
+    },
+    {
+      "name": "LABST",
+      "type": "QUAN(13,3)",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

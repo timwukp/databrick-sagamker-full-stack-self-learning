@@ -1,0 +1,4 @@
+dc_id,sku,forecast_date,horizon_day,units_mean_28_dc,is_promo,promo_days_left
+DC-SG-01,SKU-20871,2026-10-10,1,412.5,true,2
+DC-SG-01,SKU-20871,2026-10-13,4,412.5,false,0
+DC-TH-02,SKU-31045,2026-10-10,1,58.1,false,0

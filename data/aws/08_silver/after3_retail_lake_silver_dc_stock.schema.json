@@ -1,0 +1,30 @@
+{
+  "name": "s3tablescatalog/retail-lake.silver.dc_stock (current stock, business names)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "dc_id",
+      "type": "string",
+      "tag": "pk",
+      "note": "WERKS 'SG01' → 'DC-SG-01'"
+    },
+    {
+      "name": "sku",
+      "type": "string",
+      "tag": "pk",
+      "note": "MATNR '000000000000020871' → 'SKU-20871'"
+    },
+    {
+      "name": "on_hand_qty",
+      "type": "int",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "as_of",
+      "type": "timestamptz",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "name": "s3tablescatalog/retail-lake.gold.dc_stock_daily",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "business_date",
+      "type": "date",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "dc_id",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "sku",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "on_hand_eod",
+      "type": "int",
+      "tag": null,
+      "note": "end-of-day stock"
+    },
+    {
+      "name": "open_po_qty",
+      "type": "int",
+      "tag": null,
+      "note": "ordered, not yet received"
+    },
+    {
+      "name": "served_stores",
+      "type": "int",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

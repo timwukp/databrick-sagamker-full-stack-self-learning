@@ -1,0 +1,54 @@
+{
+  "name": "retail.bronze.promo_calendar (streaming table via Auto Loader)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "sku",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "store_scope",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "start_date",
+      "type": "STRING",
+      "tag": null,
+      "note": "still text"
+    },
+    {
+      "name": "end_date",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "promo_type",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "discount_pct",
+      "type": "STRING",
+      "tag": null,
+      "note": "CSV columns are inferred as STRING by default"
+    },
+    {
+      "name": "_rescued_data",
+      "type": "STRING",
+      "tag": "sys",
+      "note": "added by Auto Loader"
+    },
+    {
+      "name": "_source_file",
+      "type": "STRING",
+      "tag": "sys",
+      "note": "from _metadata.file_path"
+    }
+  ]
+}

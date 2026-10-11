@@ -1,0 +1,36 @@
+{
+  "name": "DescribeTrainingJob (excerpt)",
+  "kind": "json",
+  "columns": [
+    {
+      "name": "TrainingJobName",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "TrainingJobStatus",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "ModelArtifacts.S3ModelArtifacts",
+      "type": "string",
+      "tag": null,
+      "note": "model.tar.gz in S3"
+    },
+    {
+      "name": "FinalMetricDataList",
+      "type": "list",
+      "tag": null,
+      "note": "parsed from logs by regex"
+    },
+    {
+      "name": "BillableTimeInSeconds",
+      "type": "int",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

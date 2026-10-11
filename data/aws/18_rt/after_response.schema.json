@@ -1,0 +1,12 @@
+{
+  "name": "Response (format defined by your inference container)",
+  "kind": "json",
+  "columns": [
+    {
+      "name": "predictions",
+      "type": "list<struct<p10,p50,p90>>",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

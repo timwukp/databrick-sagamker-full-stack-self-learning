@@ -1,0 +1,8 @@
+{
+  "artifact_path": "model",
+  "flavor": "python_function",
+  "signature": {
+    "inputs": "store_id, sku, units_lag_7, units_mean_28, is_promo, …",
+    "outputs": "p10, p50, p90"
+  }
+}

@@ -1,0 +1,3 @@
+rule,rows_dropped,example
+dedupe on event_id,1,"pos-SG001-T03-000184, send_attempt 2"
+valid_line: sku IS NOT NULL AND qty <> 0,1,pos-SG001-T05-000201

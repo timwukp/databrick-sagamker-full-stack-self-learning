@@ -1,0 +1,48 @@
+{
+  "name": "s3://retail-landing/promo/ (two new files)",
+  "kind": "text",
+  "columns": [
+    {
+      "name": "sku",
+      "type": "text",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "store_scope",
+      "type": "text",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "start_date",
+      "type": "text",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "end_date",
+      "type": "text",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "promo_type",
+      "type": "text",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "discount_pct",
+      "type": "text",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "max_per_customer",
+      "type": "text",
+      "tag": null,
+      "note": "only in the vendor file"
+    }
+  ]
+}

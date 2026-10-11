@@ -1,0 +1,24 @@
+{
+  "name": "Drift run logged to an MLflow App (Evidently AI)",
+  "kind": "json",
+  "columns": [
+    {
+      "name": "metrics.drift_share",
+      "type": "double",
+      "tag": null,
+      "note": "share of drifted features"
+    },
+    {
+      "name": "metrics.psi.*",
+      "type": "double",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "alert",
+      "type": "string",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

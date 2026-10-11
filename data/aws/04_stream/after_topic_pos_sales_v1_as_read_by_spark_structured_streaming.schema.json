@@ -1,0 +1,48 @@
+{
+  "name": "Topic pos.sales.v1, as read by Spark Structured Streaming",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "key",
+      "type": "BINARY",
+      "tag": null,
+      "note": "store_id bytes (shown decoded)"
+    },
+    {
+      "name": "value",
+      "type": "BINARY",
+      "tag": null,
+      "note": "the JSON payload bytes"
+    },
+    {
+      "name": "topic",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "partition",
+      "type": "INT",
+      "tag": null,
+      "note": "same key, same partition"
+    },
+    {
+      "name": "offset",
+      "type": "BIGINT",
+      "tag": null,
+      "note": "position inside the partition"
+    },
+    {
+      "name": "timestamp",
+      "type": "TIMESTAMP",
+      "tag": null,
+      "note": "producer time, UTC"
+    },
+    {
+      "name": "timestampType",
+      "type": "INT",
+      "tag": null,
+      "note": "0 = CreateTime"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+span,type,input,output,latency_ms
+replenishment_agent,AGENT,question,answer + draft PO,4120
+genie_ask,TOOL (Genie One MCP),"daily units, SKU-20871, last 14 days",promo lifted SG units from 92 to 186,1830
+get_forecast,TOOL (Model Serving),"DC-SG-01, SKU-20871, 7 days","p50 total 2,456",210
+search_supplier_terms,RETRIEVER (AI Search),SKU-20871 supplier contract,"case pack 24, lead time 3 days (clause 4.2)",340
+compose_answer,LLM (via Unity Gateway),facts above,promo through 12 Oct; 46 cases needed by 13 Oct,1650
+create_draft_po,TOOL (UC function),1104 units,"PO-DRAFT-88213, PENDING_APPROVAL",90

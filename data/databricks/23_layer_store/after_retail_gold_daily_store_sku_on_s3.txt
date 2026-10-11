@@ -1,0 +1,6 @@
+s3://retail-uc-managed/…/tables/8d1f…/
+  _delta_log/
+    00000000000000000040.checkpoint.parquet
+    00000000000000000041.json        ← commit: add 2 files, remove 1
+  part-00000-3a9c…-c000.snappy.parquet
+  part-00001-77e2…-c000.snappy.parquet

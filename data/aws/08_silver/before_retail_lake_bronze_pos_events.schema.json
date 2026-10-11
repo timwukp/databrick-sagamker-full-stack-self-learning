@@ -1,0 +1,42 @@
+{
+  "name": "s3tablescatalog/retail-lake.bronze.pos_events (Iceberg)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "kafka_key",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "payload",
+      "type": "string",
+      "tag": null,
+      "note": "raw JSON, untouched"
+    },
+    {
+      "name": "partition",
+      "type": "int",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "offset",
+      "type": "long",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "kafka_ts",
+      "type": "timestamptz",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "_ingested_at",
+      "type": "timestamptz",
+      "tag": "sys",
+      "note": "when the platform wrote it"
+    }
+  ]
+}

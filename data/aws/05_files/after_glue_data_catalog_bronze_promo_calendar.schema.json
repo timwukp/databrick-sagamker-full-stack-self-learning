@@ -1,0 +1,54 @@
+{
+  "name": "Glue Data Catalog: bronze.promo_calendar (Glue job with job bookmarks)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "sku",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "store_scope",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "start_date",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "end_date",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "promo_type",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "discount_pct",
+      "type": "bigint",
+      "tag": null,
+      "note": "Glue infers numbers"
+    },
+    {
+      "name": "max_per_customer",
+      "type": "bigint",
+      "tag": "new",
+      "note": "new column added to the table"
+    },
+    {
+      "name": "ingest_date",
+      "type": "string",
+      "tag": "part",
+      "note": "partition column"
+    }
+  ]
+}

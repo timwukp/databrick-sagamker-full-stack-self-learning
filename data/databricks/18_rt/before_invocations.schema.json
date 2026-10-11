@@ -1,0 +1,12 @@
+{
+  "name": "Request: POST /serving-endpoints/demand-forecaster/invocations",
+  "kind": "json",
+  "columns": [
+    {
+      "name": "dataframe_records",
+      "type": "list<struct<store_id,sku,as_of>>",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

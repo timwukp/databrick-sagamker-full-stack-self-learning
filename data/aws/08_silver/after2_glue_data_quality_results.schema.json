@@ -1,0 +1,24 @@
+{
+  "name": "Glue Data Quality results (DQDL ruleset)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "rule",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "outcome",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "failed_rows",
+      "type": "long",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

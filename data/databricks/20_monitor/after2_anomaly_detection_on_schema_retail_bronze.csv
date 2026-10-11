@@ -1,0 +1,4 @@
+table,freshness,completeness
+retail.bronze.pos_events,healthy,healthy
+retail.bronze.sap_mard,stale: no commit for 6 h,healthy
+retail.bronze.promo_calendar,healthy,healthy

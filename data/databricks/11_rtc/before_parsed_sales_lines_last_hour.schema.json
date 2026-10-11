@@ -1,0 +1,30 @@
+{
+  "name": "Parsed sales lines, last hour (Saturday 10 Oct)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "store_id",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "sku",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "qty",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "event_ts_utc",
+      "type": "TIMESTAMP",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

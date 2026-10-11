@@ -1,0 +1,60 @@
+{
+  "name": "retail.features.store_sku_daily (feature table)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "store_id",
+      "type": "STRING",
+      "tag": "pk",
+      "note": null
+    },
+    {
+      "name": "sku",
+      "type": "STRING",
+      "tag": "pk",
+      "note": null
+    },
+    {
+      "name": "business_date",
+      "type": "DATE",
+      "tag": "ts",
+      "note": "TIMESERIES key: enables point-in-time joins"
+    },
+    {
+      "name": "units_lag_7",
+      "type": "INT",
+      "tag": null,
+      "note": "same weekday last week"
+    },
+    {
+      "name": "units_mean_28",
+      "type": "DOUBLE",
+      "tag": null,
+      "note": "28-day average"
+    },
+    {
+      "name": "dow",
+      "type": "INT",
+      "tag": null,
+      "note": "1 = Monday"
+    },
+    {
+      "name": "is_promo",
+      "type": "BOOLEAN",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "discount_pct",
+      "type": "DOUBLE",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "promo_days_left",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

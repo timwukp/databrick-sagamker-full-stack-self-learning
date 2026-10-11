@@ -1,0 +1,36 @@
+{
+  "name": "Agent trace (MLflow Tracing, stored in Unity Catalog)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "span",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "type",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "input",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "output",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "latency_ms",
+      "type": "BIGINT",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

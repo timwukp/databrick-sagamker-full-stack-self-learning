@@ -1,0 +1,3 @@
+source,store_id,sku,latest values
+feature table (nightly),SG-ORCH-001,SKU-20871,"units_lag_7 97, units_mean_28 89.6, is_promo true, promo_days_left 2"
+stream features (step: real-time),SG-ORCH-001,SKU-20871,"units_15m 7, units_60m 13 at 02:15 UTC"

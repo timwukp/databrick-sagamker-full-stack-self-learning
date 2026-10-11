@@ -1,0 +1,2 @@
+business_date,store_id,sku,units,net_revenue,currency,txn_count,is_promo
+2026-10-09,TH-BKK-007,SKU-31045,21,,THB,21,false

@@ -1,0 +1,11 @@
+field,value
+run_id,4f2c9d1e8a7b4c06
+status,FINISHED
+params.num_leaves,31
+params.learning_rate,0.05
+params.horizon_days,30
+metrics.wmape_holdout,0.187
+metrics.bias,-0.021
+metrics.series_failed,12
+tags.region,SEA
+artifacts,"model/, per_series_metrics.parquet, wmape_by_store.png"

@@ -1,0 +1,42 @@
+{
+  "name": "Suggested purchase order sent to ERP",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "dc_id",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "sku",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "suggested_qty",
+      "type": "INT",
+      "tag": null,
+      "note": "2456 + 420 − 1180 − 600"
+    },
+    {
+      "name": "order_qty",
+      "type": "INT",
+      "tag": null,
+      "note": "rounded up to 46 cases × 24"
+    },
+    {
+      "name": "need_by",
+      "type": "DATE",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "status",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

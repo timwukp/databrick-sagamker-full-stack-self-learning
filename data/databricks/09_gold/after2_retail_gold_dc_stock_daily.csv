@@ -1,0 +1,4 @@
+business_date,dc_id,sku,on_hand_eod,open_po_qty,served_stores
+2026-10-09,DC-SG-01,SKU-20871,1180,600,38
+2026-10-09,DC-SG-01,SKU-10023,3310,0,38
+2026-10-09,DC-TH-02,SKU-31045,96,0,22

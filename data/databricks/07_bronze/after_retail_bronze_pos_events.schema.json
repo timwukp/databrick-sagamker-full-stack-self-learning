@@ -1,0 +1,42 @@
+{
+  "name": "retail.bronze.pos_events (streaming table)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "kafka_key",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "payload",
+      "type": "STRING",
+      "tag": null,
+      "note": "raw JSON, untouched"
+    },
+    {
+      "name": "partition",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "offset",
+      "type": "BIGINT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "kafka_ts",
+      "type": "TIMESTAMP",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "_ingested_at",
+      "type": "TIMESTAMP",
+      "tag": "sys",
+      "note": "when the platform wrote it"
+    }
+  ]
+}

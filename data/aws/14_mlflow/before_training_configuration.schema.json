@@ -1,0 +1,48 @@
+{
+  "name": "Training configuration",
+  "kind": "json",
+  "columns": [
+    {
+      "name": "model_type",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "objective",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "num_leaves",
+      "type": "int",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "learning_rate",
+      "type": "double",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "horizon_days",
+      "type": "int",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "train_window_days",
+      "type": "int",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "series",
+      "type": "int",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

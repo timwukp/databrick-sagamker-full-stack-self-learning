@@ -1,0 +1,30 @@
+{
+  "name": "Lakeflow Jobs: retail_nightly",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "task",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "type",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "depends_on",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "does",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+sku,store_scope,start_date,end_date,promo_type,discount_pct
+SKU-20871,SG|MY,2026-10-09,2026-10-12,PCT_OFF,20
+SKU-31045,TH,2026-10-20,2026-10-26,PCT_OFF,15
+SKU-10023,SG,2026-10-16,2026-10-18,BUY2_SAVE,10

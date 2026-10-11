@@ -1,0 +1,30 @@
+{
+  "name": "Feature Store record written by Flink (PutRecord)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "store_sku",
+      "type": "String",
+      "tag": "rid",
+      "note": "record identifier = store#sku"
+    },
+    {
+      "name": "event_time",
+      "type": "String",
+      "tag": "et",
+      "note": "required event time"
+    },
+    {
+      "name": "units_15m",
+      "type": "Integral",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "units_60m",
+      "type": "Integral",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

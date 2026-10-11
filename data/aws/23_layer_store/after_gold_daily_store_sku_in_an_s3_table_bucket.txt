@@ -1,0 +1,8 @@
+table bucket: retail-lake   (object layout managed by S3 Tables)
+  metadata/
+    00012-5be1….metadata.json        ← current snapshot pointer
+    snap-4471…-1-c2f0….avro           ← manifest list
+    c2f0…-m0.avro                     ← manifest: which data files
+  data/
+    00000-0-a91d….parquet
+    00001-0-0f3c….parquet

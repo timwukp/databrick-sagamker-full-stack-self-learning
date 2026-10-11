@@ -1,0 +1,60 @@
+{
+  "name": "Online Feature Store (Lakebase Postgres): one row per key",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "store_id",
+      "type": "STRING",
+      "tag": "pk",
+      "note": null
+    },
+    {
+      "name": "sku",
+      "type": "STRING",
+      "tag": "pk",
+      "note": null
+    },
+    {
+      "name": "units_lag_7",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "units_mean_28",
+      "type": "DOUBLE",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "is_promo",
+      "type": "BOOLEAN",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "promo_days_left",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "units_15m",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "units_60m",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "_updated_at",
+      "type": "TIMESTAMP",
+      "tag": "sys",
+      "note": null
+    }
+  ]
+}

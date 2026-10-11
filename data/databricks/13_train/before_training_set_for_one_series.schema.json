@@ -1,0 +1,54 @@
+{
+  "name": "Training set for one series (SG-ORCH-001 × SKU-20871), last 4 of 730 days",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "store_id",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "sku",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "business_date",
+      "type": "DATE",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "units",
+      "type": "BIGINT",
+      "tag": null,
+      "note": "label"
+    },
+    {
+      "name": "units_lag_7",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "units_mean_28",
+      "type": "DOUBLE",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "is_promo",
+      "type": "BOOLEAN",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "dow",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "name": "s3://retail-landing/promo/2026-10-08/promo_SEA.csv",
+  "kind": "text",
+  "columns": [
+    {
+      "name": "sku",
+      "type": "text",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "store_scope",
+      "type": "text",
+      "tag": null,
+      "note": "two countries packed into one cell (SG and MY)"
+    },
+    {
+      "name": "start_date",
+      "type": "text",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "end_date",
+      "type": "text",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "promo_type",
+      "type": "text",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "discount_pct",
+      "type": "text",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

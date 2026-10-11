@@ -1,0 +1,21 @@
+{
+  "captureData": {
+    "endpointInput": {
+      "observedContentType": "application/json",
+      "mode": "INPUT",
+      "data": "{\"instances\":[{\"store_id\":\"SG-ORCH-001\",\"sku\":\"SKU-20871\",\"units_15m\":7}]}",
+      "encoding": "JSON"
+    },
+    "endpointOutput": {
+      "observedContentType": "application/json",
+      "mode": "OUTPUT",
+      "data": "{\"predictions\":[{\"p50\":205.0}]}",
+      "encoding": "JSON"
+    }
+  },
+  "eventMetadata": {
+    "eventId": "0b7e3c1a-…",
+    "inferenceTime": "2026-10-10T02:15:03Z"
+  },
+  "eventVersion": "0"
+}

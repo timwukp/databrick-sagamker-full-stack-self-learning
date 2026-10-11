@@ -1,0 +1,42 @@
+{
+  "name": "retail.bronze.sap_mard (history tracking = SCD type 2)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "MATNR",
+      "type": "STRING",
+      "tag": "pk",
+      "note": null
+    },
+    {
+      "name": "WERKS",
+      "type": "STRING",
+      "tag": "pk",
+      "note": null
+    },
+    {
+      "name": "LGORT",
+      "type": "STRING",
+      "tag": "pk",
+      "note": null
+    },
+    {
+      "name": "LABST",
+      "type": "DECIMAL(13,3)",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "__START_AT",
+      "type": "TIMESTAMP",
+      "tag": "sys",
+      "note": "this version valid from"
+    },
+    {
+      "name": "__END_AT",
+      "type": "TIMESTAMP",
+      "tag": "sys",
+      "note": "null = current version"
+    }
+  ]
+}

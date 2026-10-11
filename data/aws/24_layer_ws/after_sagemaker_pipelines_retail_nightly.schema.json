@@ -1,0 +1,30 @@
+{
+  "name": "SageMaker Pipelines: retail-nightly (plus data jobs elsewhere)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "step",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "type",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "depends_on",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "does",
+      "type": "string",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "name": "Drift metrics table (data profiling, inference profile)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "window",
+      "type": "STRUCT<start,end>",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "window_cmp",
+      "type": "STRUCT<start,end>",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "drift_type",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "column_name",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "population_stability_index",
+      "type": "DOUBLE",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "js_distance",
+      "type": "DOUBLE",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

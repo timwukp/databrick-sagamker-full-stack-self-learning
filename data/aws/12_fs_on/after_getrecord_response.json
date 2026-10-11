@@ -1,0 +1,36 @@
+{
+  "Record": [
+    {
+      "FeatureName": "store_sku",
+      "ValueAsString": "SG-ORCH-001#SKU-20871"
+    },
+    {
+      "FeatureName": "event_time",
+      "ValueAsString": "2026-10-10T10:15:00+08:00"
+    },
+    {
+      "FeatureName": "units_lag_7",
+      "ValueAsString": "97"
+    },
+    {
+      "FeatureName": "units_mean_28",
+      "ValueAsString": "89.6"
+    },
+    {
+      "FeatureName": "is_promo",
+      "ValueAsString": "1"
+    },
+    {
+      "FeatureName": "promo_days_left",
+      "ValueAsString": "2"
+    },
+    {
+      "FeatureName": "units_15m",
+      "ValueAsString": "7"
+    },
+    {
+      "FeatureName": "units_60m",
+      "ValueAsString": "13"
+    }
+  ]
+}

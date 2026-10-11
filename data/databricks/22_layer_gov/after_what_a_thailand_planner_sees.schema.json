@@ -1,0 +1,54 @@
+{
+  "name": "What a Thailand planner sees",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "business_date",
+      "type": "DATE",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "store_id",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "sku",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "units",
+      "type": "BIGINT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "net_revenue",
+      "type": "DECIMAL(14,2)",
+      "tag": null,
+      "note": "masked: not in the finance group"
+    },
+    {
+      "name": "currency",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "txn_count",
+      "type": "BIGINT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "is_promo",
+      "type": "BOOLEAN",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

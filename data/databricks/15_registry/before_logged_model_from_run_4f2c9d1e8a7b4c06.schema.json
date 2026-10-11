@@ -1,0 +1,24 @@
+{
+  "name": "Logged model from run 4f2c9d1e8a7b4c06",
+  "kind": "json",
+  "columns": [
+    {
+      "name": "artifact_path",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "flavor",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "signature",
+      "type": "struct<inputs,outputs>",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

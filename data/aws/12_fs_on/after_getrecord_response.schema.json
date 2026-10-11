@@ -1,0 +1,12 @@
+{
+  "name": "GetRecord response",
+  "kind": "json",
+  "columns": [
+    {
+      "name": "Record",
+      "type": "list<struct<FeatureName,ValueAsString>>",
+      "tag": null,
+      "note": "every value is a string"
+    }
+  ]
+}

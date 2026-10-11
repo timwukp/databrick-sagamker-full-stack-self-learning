@@ -1,0 +1,6 @@
+key,value,topic,partition,offset,timestamp,timestampType
+MY-KUL-014,"{""event_id"":""pos-MY014-T02-000977"",…,""loyalty_id"":""L-55821""}",pos.sales.v1,1,775310,2026-10-09 04:15:34.010,0
+SG-ORCH-001,"{""event_id"":""pos-SG001-T03-000184"",…,""send_attempt"":1}",pos.sales.v1,4,1048576,2026-10-09 10:42:08.120,0
+SG-ORCH-001,"{""event_id"":""pos-SG001-T03-000184"",…,""send_attempt"":2}",pos.sales.v1,4,1048577,2026-10-09 10:42:11.402,0
+SG-ORCH-001,"{""event_id"":""pos-SG001-T05-000201"",…,""sku"":null,""qty"":0}",pos.sales.v1,4,1048590,2026-10-09 11:03:13.551,0
+TH-BKK-007,"{""event_id"":""pos-TH007-T01-002291"",…}",pos.sales.v1,9,532118,2026-10-09 17:07:12.004,0

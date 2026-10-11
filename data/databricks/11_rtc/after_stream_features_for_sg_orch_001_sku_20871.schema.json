@@ -1,0 +1,36 @@
+{
+  "name": "Stream features for SG-ORCH-001 × SKU-20871",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "store_id",
+      "type": "STRING",
+      "tag": "pk",
+      "note": null
+    },
+    {
+      "name": "sku",
+      "type": "STRING",
+      "tag": "pk",
+      "note": null
+    },
+    {
+      "name": "window_end",
+      "type": "TIMESTAMP",
+      "tag": "ts",
+      "note": null
+    },
+    {
+      "name": "units_15m",
+      "type": "INT",
+      "tag": null,
+      "note": "2 + 4 + 1"
+    },
+    {
+      "name": "units_60m",
+      "type": "INT",
+      "tag": null,
+      "note": "all six events"
+    }
+  ]
+}

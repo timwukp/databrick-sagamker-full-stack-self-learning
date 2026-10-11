@@ -1,0 +1,54 @@
+{
+  "name": "Inference table of the serving endpoint (auto-logged)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "request_date",
+      "type": "DATE",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "databricks_request_id",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "request_time",
+      "type": "TIMESTAMP",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "status_code",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "execution_duration_ms",
+      "type": "BIGINT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "request",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "response",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "served_entity_id",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

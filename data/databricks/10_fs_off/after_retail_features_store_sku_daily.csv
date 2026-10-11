@@ -1,0 +1,5 @@
+store_id,sku,business_date,units_lag_7,units_mean_28,dow,is_promo,discount_pct,promo_days_left
+SG-ORCH-001,SKU-20871,2026-10-09,92,88.4,5,true,20,3
+SG-ORCH-001,SKU-10023,2026-10-09,61,58.9,5,false,0,0
+MY-KUL-014,SKU-20871,2026-10-09,118,109.6,5,true,20,3
+TH-BKK-007,SKU-31045,2026-10-09,19,17.3,5,false,0,0

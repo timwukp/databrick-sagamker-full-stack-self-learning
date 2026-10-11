@@ -1,0 +1,48 @@
+{
+  "name": "Scoring input for tonight (DC level)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "dc_id",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "sku",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "forecast_date",
+      "type": "DATE",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "horizon_day",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "units_mean_28_dc",
+      "type": "DOUBLE",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "is_promo",
+      "type": "BOOLEAN",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "promo_days_left",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

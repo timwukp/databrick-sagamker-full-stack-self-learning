@@ -1,0 +1,48 @@
+{
+  "name": "s3://retail-ml/batch-out/2026-10-09/part-00000.csv.out",
+  "kind": "text",
+  "columns": [
+    {
+      "name": "dc_id",
+      "type": "text",
+      "tag": null,
+      "note": "joined back from the input"
+    },
+    {
+      "name": "sku",
+      "type": "text",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "forecast_date",
+      "type": "text",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "horizon_day",
+      "type": "text",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "p10",
+      "type": "text",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "p50",
+      "type": "text",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "p90",
+      "type": "text",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

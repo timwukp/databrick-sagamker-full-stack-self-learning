@@ -1,0 +1,42 @@
+{
+  "name": "s3://retail-raw/dms/SAPSR3/MARD/ (DMS CDC files, Parquet)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "Op",
+      "type": "string",
+      "tag": "sys",
+      "note": "I / U / D, added by DMS"
+    },
+    {
+      "name": "cdc_ts",
+      "type": "timestamp",
+      "tag": "sys",
+      "note": "commit time (TimestampColumnName setting)"
+    },
+    {
+      "name": "MATNR",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "WERKS",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "LGORT",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "LABST",
+      "type": "decimal(13,3)",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

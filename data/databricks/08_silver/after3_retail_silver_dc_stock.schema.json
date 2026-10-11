@@ -1,0 +1,30 @@
+{
+  "name": "retail.silver.dc_stock (current stock, business names)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "dc_id",
+      "type": "STRING",
+      "tag": "pk",
+      "note": "WERKS 'SG01' → 'DC-SG-01'"
+    },
+    {
+      "name": "sku",
+      "type": "STRING",
+      "tag": "pk",
+      "note": "MATNR '000000000000020871' → 'SKU-20871'"
+    },
+    {
+      "name": "on_hand_qty",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "as_of",
+      "type": "TIMESTAMP",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

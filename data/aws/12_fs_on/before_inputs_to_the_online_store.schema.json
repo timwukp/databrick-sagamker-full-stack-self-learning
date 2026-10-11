@@ -1,0 +1,30 @@
+{
+  "name": "Inputs to the online store",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "source",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "store_id",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "sku",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "latest values",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

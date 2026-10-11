@@ -1,0 +1,8 @@
+task,type,depends_on,does
+ingest,pipeline task,—,refresh bronze → silver → gold
+features,pipeline task,ingest,refresh feature tables
+train,notebook task,features,"many-models training, logged to MLflow"
+gate,if/else condition,train,challenger wMAPE < champion?
+promote,notebook task,gate = true,move alias @champion
+score,notebook task,"promote, or gate = false",write gold.dc_sku_forecast
+dashboard,dashboard task,score,refresh the AI/BI dashboard

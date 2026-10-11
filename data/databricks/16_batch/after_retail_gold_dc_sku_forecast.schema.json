@@ -1,0 +1,60 @@
+{
+  "name": "retail.gold.dc_sku_forecast",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "dc_id",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "sku",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "forecast_date",
+      "type": "DATE",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "horizon_day",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "p10",
+      "type": "DOUBLE",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "p50",
+      "type": "DOUBLE",
+      "tag": null,
+      "note": "median: used for ordering"
+    },
+    {
+      "name": "p90",
+      "type": "DOUBLE",
+      "tag": null,
+      "note": "high case: used for risk"
+    },
+    {
+      "name": "model_version",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "scored_at",
+      "type": "TIMESTAMP",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

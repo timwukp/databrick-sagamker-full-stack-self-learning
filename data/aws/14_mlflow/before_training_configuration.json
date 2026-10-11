@@ -1,0 +1,9 @@
+{
+  "model_type": "lightgbm",
+  "objective": "tweedie",
+  "num_leaves": 31,
+  "learning_rate": 0.05,
+  "horizon_days": 30,
+  "train_window_days": 730,
+  "series": 48210
+}

@@ -1,0 +1,5 @@
+store_id,sku,n_train_days,wmape_holdout,model_path
+SG-ORCH-001,SKU-20871,730,0.142,…/series/SG-ORCH-001/SKU-20871.pkl
+SG-ORCH-001,SKU-10023,730,0.118,…/series/SG-ORCH-001/SKU-10023.pkl
+MY-KUL-014,SKU-20871,512,0.171,…/series/MY-KUL-014/SKU-20871.pkl
+TH-BKK-007,SKU-31045,730,0.264,…/series/TH-BKK-007/SKU-31045.pkl

@@ -1,0 +1,5 @@
+{
+  "name": "retail.gold.daily_store_sku on S3 (Delta Lake)",
+  "kind": "text",
+  "columns": []
+}

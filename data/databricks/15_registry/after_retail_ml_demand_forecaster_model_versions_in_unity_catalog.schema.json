@@ -1,0 +1,42 @@
+{
+  "name": "retail.ml.demand_forecaster: model versions in Unity Catalog",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "version",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "aliases",
+      "type": "ARRAY<STRING>",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "run_id",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "wmape_holdout",
+      "type": "DOUBLE",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "created_at",
+      "type": "TIMESTAMP",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "status",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

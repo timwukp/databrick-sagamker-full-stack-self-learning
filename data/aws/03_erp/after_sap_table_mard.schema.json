@@ -1,0 +1,30 @@
+{
+  "name": "SAP table MARD (stock per plant and storage location)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "MATNR",
+      "type": "CHAR(18)",
+      "tag": "pk",
+      "note": "material number, zero-padded (40 chars on S/4HANA)"
+    },
+    {
+      "name": "WERKS",
+      "type": "CHAR(4)",
+      "tag": "pk",
+      "note": "plant = warehouse"
+    },
+    {
+      "name": "LGORT",
+      "type": "CHAR(4)",
+      "tag": "pk",
+      "note": "storage location"
+    },
+    {
+      "name": "LABST",
+      "type": "QUAN(13,3)",
+      "tag": null,
+      "note": "unrestricted stock"
+    }
+  ]
+}

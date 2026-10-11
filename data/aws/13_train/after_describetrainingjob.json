@@ -1,0 +1,14 @@
+{
+  "TrainingJobName": "demand-lgbm-sea-20261009",
+  "TrainingJobStatus": "Completed",
+  "ModelArtifacts": {
+    "S3ModelArtifacts": "s3://retail-ml/models/demand-lgbm-sea-20261009/output/model.tar.gz"
+  },
+  "FinalMetricDataList": [
+    {
+      "MetricName": "validation:wmape",
+      "Value": 0.187
+    }
+  ],
+  "BillableTimeInSeconds": 2310
+}

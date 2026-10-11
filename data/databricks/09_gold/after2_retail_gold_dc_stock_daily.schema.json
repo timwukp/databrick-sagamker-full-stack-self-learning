@@ -1,0 +1,42 @@
+{
+  "name": "retail.gold.dc_stock_daily",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "business_date",
+      "type": "DATE",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "dc_id",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "sku",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "on_hand_eod",
+      "type": "INT",
+      "tag": null,
+      "note": "end-of-day stock"
+    },
+    {
+      "name": "open_po_qty",
+      "type": "INT",
+      "tag": null,
+      "note": "ordered, not yet received"
+    },
+    {
+      "name": "served_stores",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

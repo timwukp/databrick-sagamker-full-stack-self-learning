@@ -1,0 +1,72 @@
+{
+  "name": "Feature group store-sku-daily, offline store (Iceberg table format)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "store_sku",
+      "type": "String",
+      "tag": "rid",
+      "note": "record identifier: store and SKU joined"
+    },
+    {
+      "name": "event_time",
+      "type": "String",
+      "tag": "et",
+      "note": "required event time"
+    },
+    {
+      "name": "units_lag_7",
+      "type": "Integral",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "units_mean_28",
+      "type": "Fractional",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "dow",
+      "type": "Integral",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "is_promo",
+      "type": "Integral",
+      "tag": null,
+      "note": "no boolean type: 1 / 0"
+    },
+    {
+      "name": "discount_pct",
+      "type": "Fractional",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "promo_days_left",
+      "type": "Integral",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "write_time",
+      "type": "timestamp",
+      "tag": "sys",
+      "note": "added by Feature Store"
+    },
+    {
+      "name": "api_invocation_time",
+      "type": "timestamp",
+      "tag": "sys",
+      "note": "added by Feature Store"
+    },
+    {
+      "name": "is_deleted",
+      "type": "boolean",
+      "tag": "sys",
+      "note": "added by Feature Store"
+    }
+  ]
+}

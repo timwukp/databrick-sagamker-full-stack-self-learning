@@ -1,0 +1,42 @@
+{
+  "name": "Store manager app: SG-ORCH-001",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "sku",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "forecast_today",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "sold_so_far",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "on_shelf",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "backroom",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "action",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

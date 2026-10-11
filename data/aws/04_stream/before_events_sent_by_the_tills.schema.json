@@ -1,0 +1,30 @@
+{
+  "name": "Events sent by the tills (from step 1)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "event_id",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "store_id",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "send_attempt",
+      "type": "int",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "bytes",
+      "type": "int",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

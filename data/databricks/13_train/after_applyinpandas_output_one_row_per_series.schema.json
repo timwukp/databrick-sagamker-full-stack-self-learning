@@ -1,0 +1,36 @@
+{
+  "name": "applyInPandas output: one row per series",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "store_id",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "sku",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "n_train_days",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "wmape_holdout",
+      "type": "DOUBLE",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "model_path",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

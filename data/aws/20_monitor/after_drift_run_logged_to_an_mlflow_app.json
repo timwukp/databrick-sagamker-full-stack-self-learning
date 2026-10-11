@@ -1,0 +1,11 @@
+{
+  "experiment": "retail-monitoring",
+  "run": "drift-2026-10-10",
+  "metrics": {
+    "drift_share": 0.33,
+    "psi.discount_pct": 0.41,
+    "psi.units_15m": 0.12,
+    "psi.prediction_p50": 0.27
+  },
+  "alert": "SNS: drift_share 0.33 > 0.30 threshold"
+}

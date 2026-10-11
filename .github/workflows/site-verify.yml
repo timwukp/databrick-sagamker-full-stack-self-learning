@@ -1,0 +1,33 @@
+name: Site Verify
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  site-verify:
+    name: site verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Set up Node (for the JavaScript parse checks)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Regenerate data from the lab and check nothing drifted
+        run: |
+          node scripts/export_from_lab.mjs
+          python3 scripts/build_portal.py
+          git diff --exit-code -- data docs/data-walkthrough.md docs/databricks-vs-aws-mapping.md index.html
+      - name: Verify the site
+        run: python3 verify.py

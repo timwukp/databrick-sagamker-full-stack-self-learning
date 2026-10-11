@@ -1,0 +1,78 @@
+{
+  "name": "retail.silver.sales_lines (one row per product line)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "event_id",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "line_no",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "store_id",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "sku",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "qty",
+      "type": "INT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "unit_price",
+      "type": "DECIMAL(10,2)",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "discount",
+      "type": "DECIMAL(10,2)",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "net_amount",
+      "type": "DECIMAL(12,2)",
+      "tag": null,
+      "note": "qty × price − discount"
+    },
+    {
+      "name": "currency",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "event_ts_utc",
+      "type": "TIMESTAMP",
+      "tag": null,
+      "note": "local text + offset → UTC"
+    },
+    {
+      "name": "business_date",
+      "type": "DATE",
+      "tag": null,
+      "note": "the store's local date"
+    },
+    {
+      "name": "loyalty_id",
+      "type": "STRING",
+      "tag": null,
+      "note": "null for old POS firmware"
+    }
+  ]
+}

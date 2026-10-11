@@ -1,0 +1,15 @@
+{
+  "instances": [
+    {
+      "store_id": "SG-ORCH-001",
+      "sku": "SKU-20871",
+      "units_lag_7": 97,
+      "units_mean_28": 89.6,
+      "is_promo": 1,
+      "promo_days_left": 2,
+      "units_15m": 7,
+      "units_60m": 13,
+      "dow": 6
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+version,aliases,run_id,wmape_holdout,created_at,status
+6,[],9b1e07c2…,0.201,2026-10-02 18:20:00,READY
+7,"[""champion""]",4f2c9d1e…,0.187,2026-10-09 18:05:00,READY
+8,"[""challenger""]",c7a03f55…,0.183,2026-10-10 03:05:00,READY

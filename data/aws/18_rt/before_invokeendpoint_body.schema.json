@@ -1,0 +1,12 @@
+{
+  "name": "InvokeEndpoint body (built by a Lambda)",
+  "kind": "json",
+  "columns": [
+    {
+      "name": "instances",
+      "type": "list<struct<store_id,sku,units_lag_7,…,units_15m,units_60m,dow>>",
+      "tag": null,
+      "note": "features included by the caller"
+    }
+  ]
+}

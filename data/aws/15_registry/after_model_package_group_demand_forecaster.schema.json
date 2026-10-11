@@ -1,0 +1,30 @@
+{
+  "name": "Model package group demand-forecaster",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "ModelPackageVersion",
+      "type": "int",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "ModelApprovalStatus",
+      "type": "string",
+      "tag": null,
+      "note": "the deployment gate"
+    },
+    {
+      "name": "ModelPackageArn",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "CreationTime",
+      "type": "timestamp",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

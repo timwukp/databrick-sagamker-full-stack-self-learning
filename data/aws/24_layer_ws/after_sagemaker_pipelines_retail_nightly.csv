@@ -1,0 +1,8 @@
+step,type,depends_on,does
+(before),Glue workflow / Step Functions,—,bronze → silver → gold jobs
+Features,ProcessingStep,data jobs,build the training set
+Train,TrainingStep,Features,many-models script
+Evaluate,ProcessingStep,Train,compute wMAPE
+Gate,ConditionStep,Evaluate,challenger better?
+Register,RegisterModel,Gate = true,PendingManualApproval
+Score,TransformStep,Register,Batch Transform

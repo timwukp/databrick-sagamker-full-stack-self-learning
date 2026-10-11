@@ -1,0 +1,30 @@
+{
+  "name": "Data Capture record in S3 (JSON Lines)",
+  "kind": "json",
+  "columns": [
+    {
+      "name": "captureData.endpointInput",
+      "type": "struct<observedContentType,mode,data,encoding>",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "captureData.endpointOutput",
+      "type": "struct<…>",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "eventMetadata",
+      "type": "struct<eventId,inferenceTime>",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "eventVersion",
+      "type": "string",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

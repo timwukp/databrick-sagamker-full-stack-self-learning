@@ -1,0 +1,4 @@
+request_date,databricks_request_id,request_time,status_code,execution_duration_ms,request,response,served_entity_id
+2026-10-10,9c2b7e41-…,2026-10-10 02:15:03.118,200,38,"{""dataframe_records"":[{""store_id"":""SG-ORCH-001"",""sku"":""SKU-20871""}]}","{""predictions"":[{""p50"":205.0}]}",demand-forecaster-7
+2026-10-10,1f80aa03-…,2026-10-10 02:15:07.402,200,41,"{""dataframe_records"":[{""store_id"":""MY-KUL-014"",""sku"":""SKU-20871""}]}","{""predictions"":[{""p50"":248.0}]}",demand-forecaster-7
+2026-10-10,77d1c9be-…,2026-10-10 02:16:55.630,200,36,"{""dataframe_records"":[{""store_id"":""TH-BKK-007"",""sku"":""SKU-31045""}]}","{""predictions"":[{""p50"":3.0}]}",demand-forecaster-7

@@ -1,0 +1,24 @@
+{
+  "name": "Pipeline event log: data quality for this update",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "rule",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "rows_dropped",
+      "type": "BIGINT",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "example",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

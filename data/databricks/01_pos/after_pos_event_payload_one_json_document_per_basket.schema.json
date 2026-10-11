@@ -1,0 +1,66 @@
+{
+  "name": "POS event payload, one JSON document per basket",
+  "kind": "json",
+  "columns": [
+    {
+      "name": "event_id",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "store_id",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "terminal_id",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "event_ts_local",
+      "type": "string",
+      "tag": null,
+      "note": "local time, as text"
+    },
+    {
+      "name": "tz_offset",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "currency",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "lines",
+      "type": "array<struct<sku,qty,unit_price,discount>>",
+      "tag": null,
+      "note": "several products in one basket"
+    },
+    {
+      "name": "payment",
+      "type": "struct<method,amount>",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "send_attempt",
+      "type": "int",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "loyalty_id",
+      "type": "string",
+      "tag": null,
+      "note": "only sent by new POS firmware"
+    }
+  ]
+}

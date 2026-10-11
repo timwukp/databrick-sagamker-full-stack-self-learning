@@ -1,0 +1,3 @@
+rule,outcome,failed_rows
+"IsComplete ""sku""",Failed,1
+"ColumnValues ""qty"" != 0",Failed,1

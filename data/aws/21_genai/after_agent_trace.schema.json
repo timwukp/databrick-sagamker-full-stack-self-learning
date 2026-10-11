@@ -1,0 +1,36 @@
+{
+  "name": "Agent trace (AgentCore Observability, OpenTelemetry spans in CloudWatch)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "span",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "type",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "input",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "output",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "latency_ms",
+      "type": "long",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

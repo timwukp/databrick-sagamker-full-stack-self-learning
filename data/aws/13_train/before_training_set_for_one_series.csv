@@ -1,0 +1,5 @@
+store_id,sku,business_date,units,units_lag_7,units_mean_28,is_promo,dow
+SG-ORCH-001,SKU-20871,2026-10-06,84,90,87.9,false,2
+SG-ORCH-001,SKU-20871,2026-10-07,88,86,88,false,3
+SG-ORCH-001,SKU-20871,2026-10-08,91,89,88.1,false,4
+SG-ORCH-001,SKU-20871,2026-10-09,186,92,88.4,true,5
