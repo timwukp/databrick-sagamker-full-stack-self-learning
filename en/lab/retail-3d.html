@@ -1,0 +1,1756 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3D lab: global retail forecasting on Databricks and AWS</title>
+<style>
+:root{
+  --paper:#E9EDF0; --card:#FFFFFF; --ink:#16212C; --muted:#56636F; --rule:#CBD3DA;
+  --dbx:#FF3621; --dbx-dark:#C9260F; --aws:#FF9900; --awsink:#232F3E;
+  --cust:#9AA6B2; --oss:#56637E;
+  --core:#475569; --sales:#2563EB; --inv:#059669; --loop:#DB2777; --genai:#7C3AED;
+  --sans:"Avenir Next","Segoe UI","Helvetica Neue","PingFang TC","Noto Sans TC",Arial,sans-serif;
+  --cond:"Avenir Next Condensed","Arial Narrow","Roboto Condensed","Avenir Next","PingFang TC",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.wrap{max-width:1500px;margin:0 auto;padding:24px 28px 72px}
+header.top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px 36px;align-items:end}
+h1{font-family:var(--cond);font-weight:700;font-size:clamp(30px,3.6vw,48px);line-height:1;letter-spacing:-.01em;margin:0 0 10px}
+.lede{max-width:72ch;color:var(--muted);margin:0}
+.controls{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.seg{display:inline-flex;background:#fff;border:1px solid var(--rule);border-radius:999px;padding:4px}
+.seg button{font:600 15px var(--sans);border:0;background:transparent;padding:9px 20px;border-radius:999px;cursor:pointer;color:var(--ink)}
+.seg button[aria-pressed="true"][data-plat="dbx"]{background:var(--dbx-dark);color:#fff}
+.seg button[aria-pressed="true"][data-plat="aws"]{background:var(--awsink);color:#fff;box-shadow:inset 0 -3px 0 var(--aws)}
+.paths{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.paths button{font:500 13px var(--sans);border:1px solid var(--rule);background:#fff;border-radius:6px;padding:6px 10px;cursor:pointer;display:inline-flex;gap:7px;align-items:center;color:var(--ink)}
+.paths button .sw{width:10px;height:10px;border-radius:2px;display:inline-block}
+.paths button[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+button:focus-visible,a:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+main.stage{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:18px;margin-top:20px}
+.viewport{position:relative;background:linear-gradient(#F8FAFB,#EDF1F4);border:1px solid var(--rule);border-radius:10px;height:clamp(480px,68vh,740px);overflow:hidden}
+canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
+canvas.dragging{cursor:grabbing}
+canvas.pointing{cursor:pointer}
+canvas:focus-visible{outline:3px solid var(--ink);outline-offset:-3px}
+.platbadge{position:absolute;left:14px;top:12px;font:700 16px/1 var(--cond);padding:7px 11px;border-radius:4px;color:#fff;background:var(--dbx-dark);pointer-events:none}
+.platbadge.aws{background:var(--awsink);box-shadow:inset 0 -3px 0 var(--aws)}
+.hud{position:absolute;left:12px;bottom:12px;right:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12.5px;color:var(--muted);pointer-events:none}
+.hud button{pointer-events:auto;font:500 12.5px var(--sans);background:#fff;border:1px solid var(--rule);border-radius:6px;padding:5px 10px;cursor:pointer;color:var(--ink)}
+.hud button[aria-pressed="true"]{border-color:var(--ink)}
+.hud .hint{margin-left:auto;background:rgba(255,255,255,.8);padding:3px 8px;border-radius:4px}
+.layers{display:none;position:absolute;left:12px;right:12px;top:50px;flex-wrap:wrap;gap:6px}
+.viewport.portrait .layers{display:flex}
+.layers button{font:700 13px/1.2 var(--cond);border-radius:4px;padding:6px 9px;cursor:pointer;border:1px solid transparent;color:#fff}
+.layers button.gov.dbx{background:var(--dbx-dark)} .layers button.gov.aws{background:var(--awsink);box-shadow:inset 0 -3px 0 var(--aws)}
+.layers button.store{background:#5B6875} .layers button.ws{background:#fff;color:var(--ink);border:1px dashed rgba(22,33,44,.5)}
+.panel{background:#fff;border:1px solid var(--rule);border-radius:10px;padding:18px 20px 22px;height:clamp(480px,68vh,740px);overflow:auto}
+.panel h2{font:700 24px/1.08 var(--cond);margin:2px 0 8px}
+.panel h3{font:600 14px/1.3 var(--sans);margin:18px 0 6px}
+.panel p{margin:6px 0}
+.panel .step{color:var(--muted);font-size:13px;margin:0}
+.panel .other{margin-top:16px;padding-top:12px;border-top:1px solid var(--rule)}
+.panel .oname{font-weight:600}
+.panel .note{margin-top:16px;background:#F3F5F7;border-left:3px solid var(--ink);padding:8px 12px;border-radius:0 6px 6px 0}
+.panel .note h3{margin:0 0 4px}
+.panel .back{margin-top:16px;font:500 13px var(--sans);background:#fff;border:1px solid var(--rule);border-radius:6px;padding:6px 10px;cursor:pointer}
+.panel .tile{margin:10px 0;padding:10px 12px;border:1px solid var(--rule);border-radius:6px}
+.panel .tile b{display:block}
+.chip{display:inline-block;font:600 11.5px/1.5 var(--sans);padding:1px 8px;border-radius:999px;color:#fff;vertical-align:1px;white-space:nowrap}
+.chip.dbx{background:var(--dbx-dark)} .chip.aws{background:var(--aws);color:var(--awsink)}
+.chip.oss{background:var(--oss)} .chip.cust{background:var(--cust);color:var(--ink)}
+a.doc{display:inline-block;margin-top:4px;font-size:13.5px;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.nodoc{font-size:13px;color:var(--muted)}
+.pathlist{font-size:13px;color:var(--muted);margin-top:12px}
+.legend{display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:12px;font-size:13px;color:var(--muted)}
+.legend .grp{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.legend .grp b{color:var(--ink);font-weight:600;margin-right:2px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+section.block{margin-top:52px}
+section.block h2{font:700 30px/1.05 var(--cond);margin:0 0 6px}
+section.block .sub{color:var(--muted);margin:0 0 16px;max-width:76ch}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+th,td{text-align:left;vertical-align:top;padding:11px 13px;border-bottom:1px solid var(--rule);font-size:14px}
+th{font:600 13px var(--sans);color:var(--muted);background:#F6F8F9}
+td .nm{font-weight:600;display:block;margin-bottom:3px}
+td .ds{color:#33404C;font-size:13px;display:block;margin:4px 0}
+td a{font-size:12.5px}
+tr.grouprow td{background:#F6F8F9;font:600 13px var(--sans);color:var(--ink)}
+.cols2{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:28px}
+ol.talk{margin:0;padding:0;list-style:none;counter-reset:t}
+ol.talk li{counter-increment:t;position:relative;padding:0 0 14px 40px;max-width:74ch}
+ol.talk li::before{content:counter(t);position:absolute;left:0;top:1px;width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;font:700 14px/26px var(--cond);text-align:center}
+ol.talk li b{font-weight:600}
+.awsalt{background:#fff;border:1px solid var(--rule);border-left:4px solid var(--aws);border-radius:6px;padding:14px 16px}
+.awsalt p{margin:6px 0}
+.srcs{columns:2;column-gap:36px;font-size:13.5px}
+.srcs li{break-inside:avoid;margin:0 0 4px}
+.muted{color:var(--muted)}
+.crumb{margin:0 0 14px;font-size:13.5px;color:var(--muted)} .crumb a{font-weight:600;color:var(--ink)} .crumb .lang{float:right;font-weight:600}
+/* data inspector */
+.dhead{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:flex-end;justify-content:space-between}
+.dhead .sub{margin-bottom:0}
+.dnav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.dnav button,.dnav select{font:500 13.5px var(--sans);border:1px solid var(--rule);background:#fff;border-radius:6px;padding:7px 10px;color:var(--ink);cursor:pointer}
+.dnav select{max-width:360px}
+.dwhat{margin:18px 0 12px;max-width:90ch}
+.dwhat b{font:700 21px/1.2 var(--cond)}
+.dplat{display:inline-block;font:700 12px/1 var(--sans);padding:4px 8px;border-radius:4px;color:#fff;background:var(--dbx-dark);vertical-align:3px;margin-right:4px}
+.dplat.aws{background:var(--awsink);box-shadow:inset 0 -2px 0 var(--aws)}
+.dgrid{display:grid;grid-template-columns:minmax(0,1fr) 26px minmax(0,1fr);gap:10px;align-items:start}
+.darrow{align-self:start;margin-top:120px;font:700 28px var(--cond);color:var(--muted);text-align:center}
+.dpane{background:#fff;border:1px solid var(--rule);border-radius:10px;padding:12px 14px 14px;min-width:0}
+.dpane h3{font:700 17px var(--cond);margin:0 0 6px;color:var(--muted)}
+.dpane .extra{margin-top:16px;padding-top:12px;border-top:1px dashed var(--rule)}
+.dt-name{font:600 13px/1.35 var(--sans);margin:2px 0 6px;word-break:break-word}
+.dt-foot{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+.scroll{overflow-x:auto;border:1px solid var(--rule);border-radius:6px}
+table.dt{border:0;border-radius:0;width:max-content;min-width:100%}
+table.dt th{background:#F3F5F7;vertical-align:bottom;padding:6px 9px;white-space:nowrap;border-bottom:1px solid var(--rule)}
+table.dt th .cn{display:block;color:var(--ink);font:700 12.5px var(--sans)}
+table.dt th .ty{display:block;font:500 11.5px var(--sans);color:#5B6875}
+table.dt td{padding:5px 9px;white-space:nowrap;font-size:12.5px;border-bottom:1px solid #E6EAEE}
+table.dt th.c-add{background:#DDF3E7} table.dt th.c-chg{background:#FCEBCB} table.dt th.c-sys{background:#ECEEFB}
+table.dt th.c-del .cn,table.dt th.c-del .ty{text-decoration:line-through;color:#98A2B3}
+tr.f-dup td,tr.f-bad td{background:#FDECEC} tr.f-dup td:not(.fn),tr.f-bad td:not(.fn){color:#8A4B4B}
+tr.f-dup td:not(.fn){text-decoration:line-through}
+tr.f-late td,tr.f-chg td{background:#FFF5DE} tr.f-evo td{background:#E7EFFD} tr.f-hl td{background:#E2F4EA} tr.f-drift td{background:#FBE6F1} tr.f-closed td{color:#8A96A3}
+td.fn{white-space:normal !important;min-width:150px;max-width:210px;font-size:11.5px !important;line-height:1.35;color:var(--ink);text-decoration:none !important;border-right:1px solid var(--rule)}
+th.fnh{background:#F3F5F7;border-right:1px solid var(--rule)}
+.fl{display:inline-block;font:600 10.5px/1.6 var(--sans);padding:0 7px;border-radius:999px;margin-right:5px;color:#fff;background:#56636F;white-space:nowrap}
+.fl.dup,.fl.bad{background:#B42318} .fl.late,.fl.chg{background:#B54708} .fl.evo{background:#1D4ED8} .fl.hl,.fl.ok{background:#067647} .fl.drift{background:#C11574} .fl.closed{background:#8A96A3}
+.nul{color:#98A2B3;font-style:italic} .bool{color:#1D4ED8}
+.tg{display:inline-block;font:600 9.5px/1.5 var(--sans);padding:0 5px;border-radius:3px;background:#16212C;color:#fff;vertical-align:1px}
+.tg-sys{background:#4F46E5} .tg-new{background:#067647} .tg-part{background:#56636F} .tg-rid,.tg-et{background:#B86E00}
+pre.json,pre.txt,pre.code{background:#101B26;color:#E6EDF3;border-radius:6px;padding:10px 12px;overflow:auto;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:4px 0 8px;max-height:360px}
+pre.json .k{color:#8FD3FF}
+.js-item{margin-bottom:6px}
+.js-lab{font:600 12.5px var(--sans);margin:8px 0 3px}
+details.schema{margin-top:10px} details.schema summary{cursor:pointer;font:600 13px var(--sans);color:var(--muted)}
+ul.sch{list-style:none;margin:6px 0 0;padding:0;font-size:12.5px}
+ul.sch li{display:grid;grid-template-columns:14px minmax(0,1fr) minmax(0,1fr);gap:2px 8px;padding:4px 0;border-bottom:1px dashed #E3E8EC}
+ul.sch .sn{font-weight:600;word-break:break-word} ul.sch .st{color:#44515D;word-break:break-word}
+ul.sch .nt{grid-column:2 / 4;color:var(--muted);font-size:12px}
+.m{font-weight:700} .m.add{color:#067647} .m.chg{color:#B54708} .m.del{color:#B42318}
+.dwhy{margin-top:14px;max-width:none} .dwhy p{max-width:100ch}
+.diffline{font-size:13px;margin-top:8px}
+.diffline .add{color:#067647;font-weight:600} .diffline .chg{color:#B54708;font-weight:600} .diffline .del{color:#B42318;font-weight:600}
+details.codeb{margin-top:12px} details.codeb summary{cursor:pointer;font:600 14px var(--sans)}
+.dpager{font-size:12.5px;margin-top:6px}
+@media (max-width:1100px){ .dgrid{grid-template-columns:1fr} .darrow{transform:rotate(90deg);height:22px;margin-top:0;align-self:center} }
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (max-width:1100px){
+  header.top{grid-template-columns:1fr} .controls{align-items:flex-start} .paths{justify-content:flex-start}
+  main.stage{grid-template-columns:1fr} .panel{height:auto;max-height:none}
+  .cols2{grid-template-columns:1fr} .srcs{columns:1}
+}
+@media (max-width:760px){ .viewport{height:min(880px, calc(100vw * 1.55))} }
+@media (max-width:640px){ .wrap{padding:16px 14px 56px} th,td{padding:9px} .hud .hint{display:none} }
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="crumb"><a href="../index.html">Databricks × AWS self-study</a> <span aria-hidden="true">/</span> 3D lab <a class="lang" href="../../lab/retail-3d.html" hreflang="zh-Hant">中文</a></p>
+
+<header class="top">
+  <div>
+    <h1>Global retail, from till to forecast</h1>
+    <p class="lede">One use case, two solutions: store POS and ERP data come in, warehouse inventory forecasts and store sales forecasts go out. Switch between Databricks / AWS: the block positions stay the same, the components change, and you compare cell by cell. All names and links were checked against the official documentation on 2026-10-10.</p>
+  </div>
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Platform">
+      <button type="button" data-plat="dbx" aria-pressed="true">Databricks solution</button>
+      <button type="button" data-plat="aws" aria-pressed="false">AWS solution</button>
+    </div>
+    <div class="paths" role="group" aria-label="Highlight a flow">
+      <button type="button" data-path="all" aria-pressed="true">Everything</button>
+      <button type="button" data-path="sales" aria-pressed="false"><span class="sw" style="background:var(--sales)"></span>Store sales forecast</button>
+      <button type="button" data-path="inv" aria-pressed="false"><span class="sw" style="background:var(--inv)"></span>Warehouse inventory forecast</button>
+      <button type="button" data-path="loop" aria-pressed="false"><span class="sw" style="background:var(--loop)"></span>Feedback loop</button>
+      <button type="button" data-path="genai" aria-pressed="false"><span class="sw" style="background:var(--genai)"></span>GenAI layer</button>
+    </div>
+  </div>
+</header>
+
+<main class="stage">
+  <section class="viewport" aria-label="3D pipeline diagram">
+    <canvas id="scene" tabindex="0" aria-label="3D diagram of the retail forecasting pipeline. Use arrow keys to rotate, plus and minus to zoom. The same content is in the table below."></canvas>
+    <div class="platbadge" id="platbadge">Databricks solution</div>
+    <div class="layers" id="layers" role="group" aria-label="Layers"></div>
+    <div class="hud">
+      <button type="button" id="resetView">Reset view</button>
+      <button type="button" id="orbit" aria-pressed="false">Slow orbit</button>
+      <span class="hint">Drag to rotate, scroll to zoom, click any box</span>
+    </div>
+  </section>
+  <aside class="panel" id="panel" aria-live="polite"></aside>
+</main>
+
+<div class="legend" aria-hidden="true">
+  <div class="grp"><b>Who provides it</b>
+    <span><i style="background:var(--dbx)"></i>Databricks</span>
+    <span><i style="background:var(--aws)"></i>AWS service</span>
+    <span><i style="background:var(--oss)"></i>Open source or third party</span>
+    <span><i style="background:var(--cust)"></i>Customer system</span>
+    <span><i style="background:linear-gradient(90deg,var(--sales) 50%,var(--inv) 50%)"></i>Business outcome</span>
+  </div>
+  <div class="grp"><b>Flows</b>
+    <span><i style="background:var(--core)"></i>Shared core</span>
+    <span><i style="background:var(--sales)"></i>Sales</span>
+    <span><i style="background:var(--inv)"></i>Inventory</span>
+    <span><i style="background:var(--loop)"></i>Feedback loop</span>
+    <span><i style="background:var(--genai)"></i>GenAI</span>
+    <span>Dashed line: logging or a tool call</span>
+  </div>
+</div>
+
+<section class="block" id="data">
+  <div class="dhead">
+    <div>
+      <h2>Data at each step</h2>
+      <p class="sub">The same synthetic data goes from POS all the way to the forecast. At each step, look at the data and schema “Before → After”: green columns are new, orange columns changed type, and dropped columns are struck through in the Before table. Click any block in the 3D diagram to jump to the same step here; switch between Databricks and AWS to see the actual format differences on each side.</p>
+    </div>
+    <div class="dnav">
+      <button type="button" id="dPrev">Previous step</button>
+      <select id="dStep" aria-label="Choose a step"></select>
+      <button type="button" id="dNext">Next step</button>
+    </div>
+  </div>
+  <div id="dBody"></div>
+</section>
+
+<section class="block" id="compare">
+  <h2>Step by step, side by side</h2>
+  <p class="sub">This table is the text version of every cell in the diagram, so you can print it and compare. The last column has the key points (study notes).</p>
+  <table id="cmpTable"><thead><tr><th style="width:15%">Step</th><th style="width:29%">Databricks</th><th style="width:29%">AWS</th><th>Key points</th></tr></thead><tbody></tbody></table>
+</section>
+
+<section class="block" id="talk">
+  <h2>Explain it in about 90 seconds</h2>
+  <p class="sub">A 90-second English walkthrough of the Databricks design, with the same design on AWS alongside for comparison.</p>
+  <div class="cols2">
+    <ol class="talk">
+      <li><b>Frame the problem.</b> A retailer with thousands of stores wants fewer stock-outs and less overstock. That is two forecasts on two clocks: a nightly 30-day forecast per warehouse and SKU for replenishment, and an intraday sales forecast per store for top-ups and staffing.</li>
+      <li><b>Ingest.</b> POS events go through Kafka, which absorbs promo-day bursts and lets us replay. ERP changes come in by CDC through Lakeflow Connect, and promo and weather files through Auto Loader.</li>
+      <li><b>Pipelines.</b> Lakeflow declarative pipelines take bronze to silver to gold. Silver handles dedupe, late events and store time zones, with expectations quarantining bad rows. Gold is daily sales and stock per store, warehouse and SKU, and it feeds both BI and ML.</li>
+      <li><b>Features and training.</b> Features live in Feature Store with point-in-time joins, so we never train on the future. We train one model per series in parallel with applyInPandas, track every run in MLflow, and register models in Unity Catalog with champion and challenger aliases.</li>
+      <li><b>Serving.</b> Inventory is a nightly batch job that writes a forecast table back to the ERP. Sales is intraday: streaming features go straight to the online feature store on Lakebase, and a Model Serving endpoint sits behind the store app.</li>
+      <li><b>Govern and observe.</b> Unity Catalog is one permission model and one lineage graph across all of it. Data quality monitoring catches late or partial feeds and drift on inference tables, and that triggers retraining.</li>
+      <li><b>Where GenAI adds the most.</b> On top, a replenishment agent: planners ask Genie why a forecast moved, and an Agent Bricks agent drafts orders for a human to approve, with models and tools going through Unity Gateway.</li>
+    </ol>
+    <div class="awsalt">
+      <p><b>The same design on AWS</b></p>
+      <p>MSK for the stream, zero-ETL or DMS for the ERP, Glue or EMR Serverless authored in SageMaker Unified Studio, Iceberg on S3 Tables, Managed Flink for streaming features, SageMaker Feature Store, training jobs or Canvas time series, managed MLflow, Model Registry, a real-time endpoint and Batch Transform, Data Capture with MLflow Apps and Evidently for drift (Model Monitor is closed to new customers), and Quick plus AgentCore on top.</p>
+      <p>It works well. The trade-off is how many services and permission models the team operates and keeps aligned: SageMaker Catalog, Lake Formation and IAM on the governance side, and Unified Studio next to SageMaker AI Studio on the tooling side.</p>
+      <p class="muted">Note: keep the comparison fair and specific. The Databricks argument is “one less layer to keep in sync”, not “AWS can't do it”. Kafka and S3 are on both sides; this is coexistence (Databricks on AWS).</p>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="fixes">
+  <h2>Common mistakes</h2>
+  <p class="sub">Databricks vs SageMaker comparisons online and from AI often have outdated names, wrong data flows and overpromises. Below are real examples we ran into, with the correct wording checked against official docs.</p>
+  <table>
+    <thead><tr><th style="width:24%">Original claim</th><th style="width:44%">Problem</th><th>Change to</th></tr></thead>
+    <tbody>
+      <tr><td>The whole thing stops at “forecast → BI”</td><td>No GenAI / agent layer. In 2026 Databricks is pushing Agent Bricks, Genie and Unity Gateway.</td><td>Add a GenAI layer (purple in the diagram).</td></tr>
+      <tr><td>Delta Live Tables (DLT)</td><td>Renamed. The official docs title is Spark Declarative Pipelines; the product is called Lakeflow pipelines.</td><td>Lakeflow Spark Declarative Pipelines</td></tr>
+      <tr><td>Kafka → Auto Loader; or 'replace the Kafka consumer with Auto Loader'</td><td>Auto Loader (cloudFiles) only reads files on cloud storage; it does not read Kafka. The two halves of the statement also contradict each other.</td><td>Use the Structured Streaming Kafka source for Kafka; use Auto Loader only for files.</td></tr>
+      <tr><td>Train Prophet / LightGBM with Mosaic AI Training</td><td>That is foundation model fine-tuning. The standard approach for tens of thousands of store×SKU time series is many-models.</td><td>Parallel training with groupBy + applyInPandas, logged in MLflow, registered to UC.</td></tr>
+      <tr><td>Model Serving 'has Lakehouse Monitoring built in'</td><td>Mixes up two things, and Lakehouse Monitoring has been renamed.</td><td>Model Serving captures request/response automatically; Data quality monitoring (anomaly detection + data profiling, the latter formerly Lakehouse Monitoring) handles quality and drift.</td></tr>
+      <tr><td>“Build a Databricks Feature Store” in Silver</td><td>Feature Store is now a UC object (Feature Views or feature tables; the non-UC Workspace Feature Store is deprecated); online serving is the Lakebase-backed Online Feature Store.</td><td>Feature Store in Unity Catalog + Online Feature Store (Lakebase)</td></tr>
+      <tr><td>Kafka ingests into Bronze with 'microsecond latency'</td><td>Not true.</td><td>Do not quote numbers; if lower latency is needed, mention Structured Streaming real-time mode.</td></tr>
+      <tr><td>Use SageMaker Experiments on the AWS side</td><td>AWS now promotes managed MLflow on SageMaker AI (MLflow Apps, available in the Singapore Region); Experiments remains only in Studio Classic.</td><td>Managed MLflow on SageMaker AI</td></tr>
+      <tr><td>Use SageMaker Model Monitor for monitoring on the AWS side</td><td>Official docs: Model Monitor is closed to new customers (same as Amazon Forecast).</td><td>Data Capture + an open-source monitoring stack (SageMaker AI MLflow Apps + Evidently AI) + CloudWatch + Quick Sight.</td></tr>
+      <tr><td>'Zero-ETL vs Auto Loader, a tie'</td><td>Different things: zero-ETL is near real-time replication from operational databases and SaaS (such as SAP, Salesforce); Auto Loader is incremental file ingestion.</td><td>Zero-ETL ↔ Lakeflow Connect; Auto Loader ↔ S3 events + Glue.</td></tr>
+      <tr><td>'The two are now fully equivalent, 1:1'</td><td>This amounts to saying the products have no differences, which is also inaccurate (for example, AWS Feature Store and Canvas are still in SageMaker AI Studio).</td><td>Talk about the difference: one governance and lineage system covers models and agent tools; at the same time, fairly acknowledge AWS strengths.</td></tr>
+      <tr><td>'UC finds the failing upstream in one second'</td><td>Overstated.</td><td>'Lineage can trace from the endpoint all the way back to the POS table.'</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="block" id="sources">
+  <h2>Checked against</h2>
+  <p class="sub">Official documentation opened and checked page by page on 2026-10-10 (Databricks doc pages show update dates of September to October 2026).</p>
+  <ul class="srcs" id="srcList"></ul>
+  <p class="sub" style="margin-top:14px">Not opened page by page today, but standard official URLs or linked directly from the official pages above: MSK, Managed Flink, SageMaker Feature Store, Model Registry, real-time endpoints, Batch Transform, Model Monitor, SageMaker Pipelines, API Gateway, IAM, Lake Formation, Glue, SageMaker Catalog, Structured Streaming real-time mode, Online Feature Store, Unity Catalog overview, Kafka docs.</p>
+</section>
+
+</div>
+
+<noscript><p style="padding:20px">This diagram needs JavaScript. The table below the diagram has the same content.</p></noscript>
+
+<script>
+(() => {
+"use strict";
+const SANS = '"Avenir Next","Segoe UI","Helvetica Neue","PingFang TC","Noto Sans TC",Arial,sans-serif';
+const COND = '"Avenir Next Condensed","Arial Narrow","Roboto Condensed","Avenir Next","PingFang TC",sans-serif';
+
+const D = {
+  kafkaDbx:"https://docs.databricks.com/aws/en/connect/streaming/kafka/",
+  autoloader:"https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/",
+  lfconnect:"https://docs.databricks.com/aws/en/ingestion/overview",
+  rtmode:"https://docs.databricks.com/aws/en/structured-streaming/real-time/concepts",
+  ldp:"https://docs.databricks.com/aws/en/ldp/",
+  fs:"https://docs.databricks.com/aws/en/machine-learning/feature-store/",
+  ofs:"https://docs.databricks.com/aws/en/machine-learning/feature-store/online-feature-store",
+  mlflow:"https://docs.databricks.com/aws/en/mlflow/",
+  pandas:"https://docs.databricks.com/aws/en/pandas/pandas-function-apis",
+  ucmodels:"https://docs.databricks.com/aws/en/machine-learning/manage-model-lifecycle/",
+  serving:"https://docs.databricks.com/aws/en/machine-learning/model-serving/",
+  dqm:"https://docs.databricks.com/aws/en/data-governance/unity-catalog/data-quality-monitoring/",
+  jobs:"https://docs.databricks.com/aws/en/jobs/",
+  apps:"https://docs.databricks.com/aws/en/dev-tools/databricks-apps/",
+  dash:"https://docs.databricks.com/aws/en/dashboards/",
+  agents:"https://docs.databricks.com/aws/en/agents/",
+  genie:"https://docs.databricks.com/aws/en/agents/mcp-tools/genie-mcp",
+  ugw:"https://docs.databricks.com/aws/en/unity-gateway/",
+  aisearch:"https://docs.databricks.com/aws/en/ai-search/ai-search",
+  uc:"https://docs.databricks.com/aws/en/data-governance/unity-catalog/",
+  lakebase:"https://docs.databricks.com/aws/en/oltp/projects/",
+  msk:"https://docs.aws.amazon.com/msk/latest/developerguide/what-is-msk.html",
+  glue:"https://docs.aws.amazon.com/glue/latest/dg/what-is-glue.html",
+  zeroetl:"https://docs.aws.amazon.com/glue/latest/dg/zero-etl-using.html",
+  flink:"https://docs.aws.amazon.com/managed-flink/latest/java/what-is.html",
+  s3t:"https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-tables.html",
+  lakehouse:"https://docs.aws.amazon.com/sagemaker-unified-studio/latest/userguide/lakehouse.html",
+  smfs:"https://docs.aws.amazon.com/sagemaker/latest/dg/feature-store.html",
+  smmlflow:"https://docs.aws.amazon.com/sagemaker/latest/dg/mlflow.html",
+  train:"https://docs.aws.amazon.com/sagemaker/latest/dg/train-model.html",
+  canvasTs:"https://docs.aws.amazon.com/sagemaker/latest/dg/canvas-time-series.html",
+  forecast:"https://docs.aws.amazon.com/forecast/latest/dg/what-is-forecast.html",
+  registry:"https://docs.aws.amazon.com/sagemaker/latest/dg/model-registry.html",
+  rt:"https://docs.aws.amazon.com/sagemaker/latest/dg/realtime-endpoints.html",
+  monitor:"https://docs.aws.amazon.com/sagemaker/latest/dg/model-monitor.html",
+  mmAvail:"https://docs.aws.amazon.com/sagemaker/latest/dg/model-monitor-availability-change.html",
+  dataCapture:"https://docs.aws.amazon.com/sagemaker/latest/dg/model-monitor-data-capture.html",
+  fsConcepts:"https://docs.aws.amazon.com/sagemaker/latest/dg/feature-store-concepts.html",
+  fsOffline:"https://docs.aws.amazon.com/sagemaker/latest/dg/feature-store-offline.html",
+  alSchema:"https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/schema",
+  ldpCdc:"https://docs.databricks.com/aws/en/ldp/cdc",
+  ldpPy:"https://docs.databricks.com/aws/en/ldp/developer/python-ref",
+  infTables:"https://docs.databricks.com/aws/en/ai-gateway/inference-tables",
+  infTablesLegacy:"https://docs.databricks.com/aws/en/ai-gateway/inference-tables-serving-endpoints",
+  profiling:"https://docs.databricks.com/aws/en/data-governance/unity-catalog/data-quality-monitoring/data-profiling/",
+  profOut:"https://docs.databricks.com/aws/en/data-governance/unity-catalog/data-quality-monitoring/data-profiling/monitor-output",
+  scoreEp:"https://docs.databricks.com/aws/en/machine-learning/model-serving/score-custom-model-endpoints",
+  batch:"https://docs.aws.amazon.com/sagemaker/latest/dg/batch-transform.html",
+  apigw:"https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html",
+  quick:"https://docs.aws.amazon.com/quick/latest/userguide/what-is.html",
+  agentcore:"https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/what-is-bedrock-agentcore.html",
+  smus:"https://docs.aws.amazon.com/sagemaker-unified-studio/latest/userguide/what-is-sagemaker-unified-studio.html",
+  nextgen:"https://docs.aws.amazon.com/next-generation-sagemaker/latest/userguide/what-is-sagemaker.html",
+  studio:"https://docs.aws.amazon.com/sagemaker/latest/dg/studio-updated.html",
+  pipelines:"https://docs.aws.amazon.com/sagemaker/latest/dg/pipelines.html",
+  smcat:"https://docs.aws.amazon.com/sagemaker-unified-studio/latest/userguide/working-with-business-catalog.html",
+  lf:"https://docs.aws.amazon.com/lake-formation/latest/dg/what-is-lake-formation.html",
+  iam:"https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html"
+};
+
+const OWN = {
+  dbx:{label:"Databricks", color:"#FF3621"},
+  aws:{label:"AWS service", color:"#FF9900"},
+  oss:{label:"Open source or third party", color:"#56637E"},
+  cust:{label:"Customer system", color:"#9AA6B2"},
+  out:{label:"Business outcome", color:null}
+};
+const PATH = {
+  core:{label:"Shared core", color:"#475569"},
+  sales:{label:"Store sales forecast", color:"#2563EB"},
+  inv:{label:"Warehouse inventory forecast", color:"#059669"},
+  loop:{label:"Feedback loop", color:"#DB2777"},
+  genai:{label:"GenAI layer", color:"#7C3AED"}
+};
+const STAGES = ["Sources","Ingest","Raw (bronze)","Clean (silver)","Curated (gold)","Features","Train and register","Serve","Use"];
+
+/* s = stage column, l = lane (-1 front: store sales, 0 shared, +1 back: warehouse inventory) */
+const NODES = [
+ {id:"pos",s:0,l:-1,h:22,
+  both:{t:"Store POS terminals",k:"Basket events, bursty on promo days",d:"Every basket becomes an event: store, SKU, quantity, price, time. Thousands of stores, with peaks on promotion days.",o:"cust",doc:null},
+  n:"Both sides start in the same place: POS is a customer system and belongs to neither platform. First ask about peak TPS, acceptable latency, and how stores resend data after a network outage."},
+ {id:"ext",s:0,l:0,h:22,
+  both:{t:"Promo calendar, weather, holidays",k:"Files and APIs from merchandising",d:"Promotion plans, price changes, weather and public holidays, delivered as files or APIs. Promotions are usually the strongest demand driver.",o:"cust",doc:null},
+  n:"Promotions, price, weather and holidays usually improve accuracy more than switching algorithms, so include them first in the design."},
+ {id:"erp",s:0,l:1,h:22,
+  both:{t:"ERP and WMS (SAP, Oracle)",k:"Stock on hand, POs, shipments",d:"System of record for stock on hand per warehouse and store, open purchase orders, inbound shipments and the product master.",o:"cust",doc:null},
+  n:"The ERP is the system of record: both solutions read it in through CDC and write suggested orders back. Neither replaces the ERP."},
+
+ {id:"stream",s:1,l:-1,h:22,
+  dbx:{t:"Apache Kafka",k:"Confluent or Amazon MSK",d:"Durable event buffer between tills and the platform, with replay after a bug fix. Databricks reads it with the Structured Streaming Kafka source inside a Lakeflow pipeline. The Kafka cluster itself can be Confluent or Amazon MSK.",o:"oss",doc:D.kafkaDbx},
+  aws:{t:"Amazon MSK",k:"Managed Kafka, or Kinesis Data Streams",d:"Managed Apache Kafka. Kinesis Data Streams is the AWS-native alternative when you do not need Kafka APIs.",o:"aws",doc:D.msk},
+  n:"Kafka is outside the platform on both sides. Databricks on AWS reading MSK directly is common: this is a point of coexistence, not competition."},
+ {id:"files",s:1,l:0,h:22,
+  dbx:{t:"Auto Loader",k:"New files from S3, schema evolution",d:"Processes new files as they land in S3 or Unity Catalog volumes (the cloudFiles source), with schema inference and evolution and exactly-once writes to Delta. Databricks recommends it inside Lakeflow pipelines.",o:"dbx",doc:D.autoloader},
+  aws:{t:"S3 landing + AWS Glue jobs",k:"Glue job bookmarks skip old files",d:"Files land in an S3 prefix. Glue jobs pick up only new files using job bookmarks, on a schedule or triggered by S3 events through EventBridge.",o:"aws",doc:D.glue},
+  n:"Auto Loader only ingests 'files'; it does not read Kafka. AWS has no one-to-one service; it is usually assembled from S3 events + Glue bookmarks."},
+ {id:"cdc",s:1,l:1,h:22,
+  dbx:{t:"Lakeflow Connect",k:"Managed connectors and database CDC",d:"Managed ingestion from databases and SaaS apps into streaming tables, with change data capture. Part of Lakeflow, next to pipelines and jobs.",o:"dbx",doc:D.lfconnect},
+  aws:{t:"Zero-ETL or AWS DMS",k:"Near real-time replication from ERP",d:"Zero-ETL integrations bring operational databases and apps such as SAP and Salesforce into the lakehouse in near real time. AWS DMS covers other change-data-capture sources.",o:"aws",doc:D.zeroetl},
+  n:"Zero-ETL maps to Lakeflow Connect (CDC), not Auto Loader. Which ERP connectors are supported depends on the customer's version; confirm it rather than promising on the spot."},
+
+ {id:"rtc",s:2,l:-1,h:22,
+  dbx:{t:"Structured Streaming, real-time mode",k:"Rolling sales features to the online store",d:"Computes rolling features, such as units sold in the last 15 minutes per store and SKU, and writes them directly to the Online Feature Store through Stream Feature Views.",o:"dbx",doc:D.rtmode},
+  aws:{t:"Managed Service for Apache Flink",k:"Windowed aggregates on the stream",d:"Flink applications compute windowed aggregates on MSK or Kinesis and write them to the SageMaker Feature Store online store.",o:"aws",doc:D.flink},
+  n:"Databricks uses one Spark engine for batch and streaming; on AWS it is common to use Spark (Glue/EMR) for batch and Flink for streaming, which means two skill sets and two sets of operations."},
+ {id:"bronze",s:2,l:0,h:22,
+  dbx:{t:"Bronze streaming tables",k:"Raw, append-only, replayable",d:"Raw Delta tables written by the Lakeflow pipeline. Nothing is cleaned here, so silver and gold can always be rebuilt.",o:"dbx",doc:D.ldp},
+  aws:{t:"Raw Iceberg tables in S3 Tables",k:"Written by Firehose or Glue streaming",d:"Raw events land in Apache Iceberg tables in an S3 table bucket, written by Amazon Data Firehose or Glue streaming jobs.",o:"aws",doc:D.s3t},
+  n:"Both sides use open table formats (Delta / Iceberg); AWS is not closed either."},
+ {id:"silver",s:3,l:0,h:22,
+  dbx:{t:"Silver: Lakeflow Spark Declarative Pipelines",k:"Dedupe, late events, expectations",d:"Declarative SQL or Python: dedupe, handle late events and store time zones, keep product master history. Expectations drop or quarantine bad rows and count them.",o:"dbx",doc:D.ldp},
+  aws:{t:"AWS Glue ETL or EMR Serverless",k:"Spark jobs plus data quality rules",d:"Spark jobs authored in SageMaker Unified Studio notebooks or Visual ETL, running on Glue or EMR Serverless. Data quality rules check each run.",o:"aws",doc:D.glue},
+  n:"DLT has been renamed Lakeflow pipelines (Spark Declarative Pipelines). This layer is the core of Databricks data engineering and is worth the most practice time."},
+ {id:"gold",s:4,l:0,h:22,
+  dbx:{t:"Gold materialized views",k:"Daily sales and stock per store, DC, SKU",d:"Business-level tables: daily sales per store and SKU, stock position per warehouse and SKU. One source for dashboards and models, so the numbers agree.",o:"dbx",doc:D.ldp},
+  aws:{t:"Curated Iceberg tables",k:"Queried by Athena or Redshift",d:"Curated tables in the SageMaker lakehouse architecture, registered in the Glue Data Catalog and queried by Athena or Redshift.",o:"aws",doc:D.lakehouse},
+  n:"One gold layer feeds both BI and ML, so the numbers on both sides stay consistent."},
+
+ {id:"fs_on",s:5,l:-1,h:22,
+  dbx:{t:"Online Feature Store",k:"Lakebase Postgres, millisecond lookups",d:"Powered by Lakebase. Model Serving looks features up automatically, so the store app only sends store and SKU.",o:"dbx",doc:D.ofs},
+  aws:{t:"SageMaker Feature Store, online",k:"Low-latency GetRecord",d:"The online store of the same feature group serves the latest values with low latency.",o:"aws",doc:D.smfs},
+  n:"Official docs: the Online Feature Store is powered by Lakebase. The old Online Tables are no longer the recommended approach."},
+ {id:"fs_off",s:5,l:0,h:22,
+  dbx:{t:"Feature Store in Unity Catalog",k:"Point-in-time joins, lineage to models",d:"Feature Views (Public Preview) or feature tables governed in Unity Catalog. Point-in-time joins stop training from seeing the future, and models record which features they used.",o:"dbx",doc:D.fs},
+  aws:{t:"SageMaker Feature Store, offline",k:"Feature groups stored in S3",d:"Feature groups with an offline store in S3 for training. AWS docs point you to SageMaker Studio, not Unified Studio, when you need Feature Store.",o:"aws",doc:D.smfs},
+  n:"The AWS documentation says it directly: use SageMaker Studio when you need Feature Store or Canvas, so the data and ML experiences are still separate. On Databricks, features are UC objects."},
+
+ {id:"mlflow",s:6,l:-1,h:22,
+  dbx:{t:"MLflow 3, managed",k:"Runs, metrics, Logged Models",d:"Databricks-managed MLflow tracks every run, parameter and metric. MLflow 3 adds Logged Models and deployment jobs governed by Unity Catalog.",o:"dbx",doc:D.mlflow},
+  aws:{t:"Managed MLflow on SageMaker AI",k:"MLflow Apps or tracking servers",d:"MLflow Apps (MLflow 3.x) or tracking servers. Models can auto-register into SageMaker Model Registry.",o:"aws",doc:D.smmlflow},
+  n:"Both sides use MLflow. Databricks created MLflow and integrates it natively with UC. SageMaker Experiments remains only in Studio Classic and is no longer the main option."},
+ {id:"train",s:6,l:0,h:22,
+  dbx:{t:"Many-models training",k:"One model per store × SKU, applyInPandas",d:"groupBy(store, sku).applyInPandas fans out thousands of small LightGBM or Prophet models in parallel on Spark, each run logged to MLflow.",o:"dbx",doc:D.pandas},
+  aws:{t:"SageMaker AI training jobs",k:"Per-series fan-out, or Canvas time series",d:"Custom per-series training fanned out across training or processing jobs. For low-code, SageMaker Canvas forecasts per item ID. Amazon Forecast is no longer available to new customers.",o:"aws",doc:D.train},
+  n:"Tens of thousands of store×SKU time series = the many-models pattern, not Mosaic AI Training (that is LLM fine-tuning). On the AWS side: Amazon Forecast is closed to new customers, and the official advice is to move to SageMaker Canvas."},
+ {id:"registry",s:6,l:1,h:22,
+  dbx:{t:"Models in Unity Catalog",k:"@champion and @challenger aliases",d:"Model versions live in Unity Catalog with aliases and lineage back to features and tables. Promotion is an alias swap, so rollback is one line.",o:"dbx",doc:D.ucmodels},
+  aws:{t:"SageMaker Model Registry",k:"Model groups and approval status",d:"Model package groups with versions and an approval status that pipelines check before deploying.",o:"aws",doc:D.registry},
+  n:"Databricks: models, tables and features share one permission model. AWS: Model Registry permissions go through IAM, data permissions through Lake Formation."},
+
+ {id:"rt",s:7,l:-1,h:22,
+  dbx:{t:"Model Serving endpoint",k:"Serverless REST, automatic feature lookup",d:"Serverless REST endpoint for intraday re-forecasts. It scales with demand, looks up online features itself and captures requests and responses for monitoring.",o:"dbx",doc:D.serving},
+  aws:{t:"SageMaker AI real-time endpoint",k:"Autoscaling, behind API Gateway",d:"Real-time endpoint with autoscaling, usually fronted by API Gateway and Lambda for the store app.",o:"aws",doc:D.rt},
+  n:"Model Serving supports both real-time and batch inference (official documentation). Design latency targets around the SLA, and do not quote numbers without a source."},
+ {id:"monitor",s:7,l:0,h:22,
+  dbx:{t:"Data quality monitoring",k:"Freshness, completeness, drift",d:"Anomaly detection watches freshness and completeness of every table. Data profiling (formerly Lakehouse Monitoring) tracks drift on inference tables. Alerts trigger retraining.",o:"dbx",doc:D.dqm},
+  aws:{t:"Data Capture + MLflow Apps + Evidently",k:"Model Monitor is closed to new customers",d:"SageMaker Model Monitor is no longer open to new customers. AWS's documented replacement: Data Capture to S3, open-source monitoring solutions built on SageMaker AI MLflow Apps and Evidently AI, CloudWatch alarms and Quick Sight dashboards.",o:"aws",doc:D.mmAvail},
+  n:"Most forecasting incidents are late or missing data, not a broken model, so monitor the data first, then the model. On the AWS side, note that SageMaker Model Monitor is closed to new customers; the replacement is something you deploy yourself (MLflow Apps + Evidently + CloudWatch)."},
+ {id:"batch",s:7,l:1,h:22,
+  dbx:{t:"Batch inference job",k:"Nightly, 30 days ahead per DC × SKU",d:"A Lakeflow Jobs task scores every warehouse and SKU 30 days ahead each night and writes a gold forecast table.",o:"dbx",doc:D.jobs},
+  aws:{t:"SageMaker Batch Transform",k:"Nightly, run by SageMaker Pipelines",d:"Nightly batch transform triggered by SageMaker Pipelines or Step Functions. Results land in S3 and load into Redshift.",o:"aws",doc:D.batch},
+  n:"The forecast is a “table”: ERP, BI and the agent read the same numbers."},
+
+ {id:"sales",s:8,l:-1,h:34,path:"sales",always:true,
+  both:{t:"Store sales forecast",k:"Per store × SKU × day, intraday",o:"out"},
+  dbx:{d:"Store managers see today's top-ups and staffing in a Databricks App that calls the endpoint.",doc:D.apps},
+  aws:{d:"A store app calls the endpoint through API Gateway and Lambda.",doc:D.apigw},
+  n:"Success is measured by stockout rate, waste rate and labor cost, not just model accuracy."},
+ {id:"genai",s:8,l:0,h:22,
+  dbx:{t:"Genie + Agent Bricks",k:"Ask why; an agent drafts orders",d:"Planners ask why a forecast moved and Genie answers over governed data. A replenishment agent built with Agent Bricks calls the forecast endpoint and drafts orders for approval. Models and tools go through Unity Gateway.",o:"dbx",doc:D.agents},
+  aws:{t:"Amazon Quick + Bedrock AgentCore",k:"Ask why; an agent drafts orders",d:"Quick answers questions and hosts dashboards. A replenishment agent on AgentCore Runtime uses Gateway tools to call the endpoint, with Policy and Evaluations around it.",o:"aws",doc:D.agentcore},
+  n:"Key points: human-in-the-loop, tool governance (Unity Gateway vs AgentCore Gateway + Policy), evaluation (MLflow 3 vs AgentCore Evaluations). Unity Gateway can use the customer's existing Amazon Bedrock capacity, a point of coexistence."},
+ {id:"inv",s:8,l:1,h:34,path:"inv",always:true,
+  both:{t:"Warehouse inventory forecast",k:"Per DC × SKU, 30 days, nightly",o:"out"},
+  dbx:{d:"Suggested orders sync back to the ERP for planners to approve. AI/BI dashboards show coverage and stock-out risk.",doc:D.dash},
+  aws:{d:"Suggested orders go back to the ERP. Amazon Quick Sight dashboards for planners.",doc:D.quick},
+  n:"The ERP is still the ordering system; forecasts only produce 'suggestions', which planners approve."}
+];
+
+const EDGES = [
+ ["pos","stream","core"],["ext","files","core"],["erp","cdc","inv"],
+ ["stream","bronze","core"],["files","bronze","core"],["cdc","bronze","inv"],
+ ["stream","rtc","sales"],["rtc","fs_on","sales"],
+ ["bronze","silver","core"],["silver","gold","core"],["gold","fs_off","core"],
+ ["fs_off","fs_on","sales"],["fs_off","train","core"],["train","mlflow","core",{dash:true}],["train","registry","core"],
+ ["registry","rt","sales"],["fs_on","rt","sales"],["rt","sales","sales"],
+ ["registry","batch","inv"],["batch","inv","inv"],
+ ["rt","monitor","loop"],["batch","monitor","loop"],["monitor","train","loop",{lift:120}],
+ ["inv","genai","genai",{dash:true}],["sales","genai","genai",{dash:true}],["genai","rt","genai",{dash:true,lift:70}]
+].map(([a,b,p,o]) => Object.assign({a,b,p},o||{}));
+
+const PL = (o) => Object.assign({x0:0.5,x1:8.5,y0:-1.65,y1:1.65,lx:0.6},o);
+const PLANES = {
+ dbx:[
+  PL({group:"ws",z:150,x0:0.5,x1:7.5,y0:-1.45,y1:1.45,kind:"ws",t:"Databricks workspace + Lakeflow Jobs",d:"Notebooks, SQL editor, pipelines and dashboards in one workspace. Lakeflow Jobs orchestrates ingest, train, score and refresh as one DAG.",doc:D.jobs}),
+  PL({group:"gov",z:-70,kind:"gov",t:"Unity Catalog",d:"One permission model and lineage graph for tables, volumes, features, models, functions and serving endpoints, extended to agents and MCP tools through Unity Gateway. Row filters, column masks and audit.",doc:D.uc}),
+  PL({group:"store",z:-140,kind:"store",lx:1.4,t:"Your Amazon S3, open formats",d:"Delta Lake tables in the customer's own S3 buckets. Compute, serverless or classic, is separate from storage.",doc:null})
+ ],
+ aws:[
+  PL({group:"ws",z:150,x0:0.5,x1:4.45,y0:-1.45,y1:1.45,kind:"ws",t:"SageMaker Unified Studio",d:"One IDE that brings together Glue, EMR, Athena, Redshift, MWAA, Bedrock and SageMaker AI.",doc:D.smus}),
+  PL({group:"ws",z:150,x0:4.55,x1:6.45,y0:-1.45,y1:1.45,kind:"ws",t:"SageMaker AI Studio",d:"AWS docs: use SageMaker Studio when you need Feature Store or Canvas.",doc:D.nextgen}),
+  PL({group:"ws",z:150,x0:6.55,x1:7.5,y0:-1.45,y1:1.45,kind:"ws",t:"Pipelines / Step Functions",d:"SageMaker Pipelines or Step Functions orchestrate training, approval and batch scoring.",doc:D.pipelines}),
+  PL({group:"gov",z:-55,kind:"gov",dash:[],lx:0.6,t:"SageMaker Catalog",d:"Discovery, publish and subscribe, data quality and lineage across data and AI assets.",doc:D.smcat}),
+  PL({group:"gov",z:-78,kind:"gov",dash:[7,4],lx:3.2,t:"Lake Formation + Glue Data Catalog",d:"Fine-grained table, column and row permissions on S3 data, plus technical metadata.",doc:D.lf}),
+  PL({group:"gov",z:-101,kind:"gov",dash:[2,4],lx:6.1,t:"IAM",d:"Who can call Feature Store, training, Model Registry and endpoints.",doc:D.iam}),
+  PL({group:"store",z:-150,kind:"store",lx:1.4,t:"Amazon S3 + S3 Tables",d:"General purpose buckets plus table buckets that store Apache Iceberg tables with automatic compaction.",doc:D.s3t})
+ ]
+};
+const GROUP_NOTE = {
+  ws:"Databricks: one workspace. AWS: Unified Studio covers data and analytics, while Feature Store / Canvas are still in SageMaker AI Studio (stated in the official documentation).",
+  gov:"This is the key difference: on Databricks one set of permissions + lineage traces from the POS table to the endpoint; AWS governance is a combination of three layers that must be kept aligned. Be fair and stick to facts.",
+  store:"On both sides the data sits in the customer's own S3 in open formats. Databricks on AWS does not move the data away; it adds a platform on top of the same S3."
+};
+const GROUP_NAME = {ws:"Where people work and how jobs run", gov:"Governance", store:"Storage"};
+
+/* =====================================================================
+   SYNTHETIC DATA: one consistent story through every step.
+   3 stores (SG-ORCH-001 Singapore, MY-KUL-014 Kuala Lumpur, TH-BKK-007 Bangkok),
+   3 SKUs, 2 warehouses (DC-SG-01 serves SG + MY, DC-TH-02 serves TH),
+   business date 2026-10-09 (Friday). SKU-20871 is 20% off in SG and MY from 9 to 12 Oct.
+   Col spec: "name|TYPE|tag|note"   tags: pk ts sys rid et part new
+   ===================================================================== */
+const T = (name, cols, rows, o) => Object.assign({kind:"table", name, cols: cols.map(c => c.split("|")), rows}, o || {});
+const J = (name, items, cols, o) => Object.assign({kind:"json", name, items, cols: (cols||[]).map(c => c.split("|"))}, o || {});
+const X = (name, text, cols, o) => Object.assign({kind:"text", name, text, cols: (cols||[]).map(c => c.split("|"))}, o || {});
+
+const E1 = {event_id:"pos-SG001-T03-000184", store_id:"SG-ORCH-001", terminal_id:"T03", event_ts_local:"2026-10-09 18:42:07", tz_offset:"+08:00", currency:"SGD",
+  lines:[{sku:"SKU-20871", qty:2, unit_price:6.90, discount:2.76},{sku:"SKU-10023", qty:1, unit_price:3.95, discount:0}], payment:{method:"card", amount:14.99}, send_attempt:1};
+const E2 = Object.assign({}, E1, {send_attempt:2});
+const E3 = {event_id:"pos-TH007-T01-002291", store_id:"TH-BKK-007", terminal_id:"T01", event_ts_local:"2026-10-09 23:58:40", tz_offset:"+07:00", currency:"THB",
+  lines:[{sku:"SKU-31045", qty:1, unit_price:289.00, discount:0}], payment:{method:"qr", amount:289.00}, send_attempt:1};
+const E4 = {event_id:"pos-MY014-T02-000977", store_id:"MY-KUL-014", terminal_id:"T02", event_ts_local:"2026-10-09 12:15:33", tz_offset:"+08:00", currency:"MYR",
+  lines:[{sku:"SKU-20871", qty:3, unit_price:7.50, discount:4.50}], payment:{method:"ewallet", amount:18.00}, send_attempt:1, loyalty_id:"L-55821"};
+const E5 = {event_id:"pos-SG001-T05-000201", store_id:"SG-ORCH-001", terminal_id:"T05", event_ts_local:"2026-10-09 19:03:12", tz_offset:"+08:00", currency:"SGD",
+  lines:[{sku:null, qty:0, unit_price:3.95, discount:0}], payment:{method:"cash", amount:0.00}, send_attempt:1};
+const POS_COLS = ["event_id|string","store_id|string","terminal_id|string","event_ts_local|string||local time, as text","tz_offset|string","currency|string",
+  "lines|array<struct<sku,qty,unit_price,discount>>||several products in one basket","payment|struct<method,amount>","send_attempt|int","loyalty_id|string||only sent by new POS firmware"];
+
+const KAFKA = T("Topic pos.sales.v1, as read by Spark Structured Streaming",
+  ["key|BINARY||store_id bytes (shown decoded)","value|BINARY||the JSON payload bytes","topic|STRING","partition|INT||same key, same partition","offset|BIGINT||position inside the partition","timestamp|TIMESTAMP||producer time, UTC","timestampType|INT||0 = CreateTime"],
+  [["MY-KUL-014",'{"event_id":"pos-MY014-T02-000977",…,"loyalty_id":"L-55821"}',"pos.sales.v1",1,775310,"2026-10-09 04:15:34.010",0],
+   ["SG-ORCH-001",'{"event_id":"pos-SG001-T03-000184",…,"send_attempt":1}',"pos.sales.v1",4,1048576,"2026-10-09 10:42:08.120",0],
+   ["SG-ORCH-001",'{"event_id":"pos-SG001-T03-000184",…,"send_attempt":2}',"pos.sales.v1",4,1048577,"2026-10-09 10:42:11.402",0],
+   ["SG-ORCH-001",'{"event_id":"pos-SG001-T05-000201",…,"sku":null,"qty":0}',"pos.sales.v1",4,1048590,"2026-10-09 11:03:13.551",0],
+   ["TH-BKK-007",'{"event_id":"pos-TH007-T01-002291",…}',"pos.sales.v1",9,532118,"2026-10-09 17:07:12.004",0]],
+  {flags:{0:["evo","E4 carries the new loyalty_id field"],2:["dup","E2: same event_id, sent again 3 s later"],3:["bad","E5: no SKU, qty 0"],4:["late","E3: sold 16:58 UTC, sent 17:07 UTC after the store network came back"]}});
+
+const BRONZE = T("retail.bronze.pos_events (streaming table)",
+  ["kafka_key|STRING","payload|STRING||raw JSON, untouched","partition|INT","offset|BIGINT","kafka_ts|TIMESTAMP","_ingested_at|TIMESTAMP|sys|when the platform wrote it"],
+  [["MY-KUL-014",'{"event_id":"pos-MY014-T02-000977",…}',1,775310,"2026-10-09 04:15:34.010","2026-10-09 04:15:36.2"],
+   ["SG-ORCH-001",'{"event_id":"pos-SG001-T03-000184",…,"send_attempt":1}',4,1048576,"2026-10-09 10:42:08.120","2026-10-09 10:42:09.9"],
+   ["SG-ORCH-001",'{"event_id":"pos-SG001-T03-000184",…,"send_attempt":2}',4,1048577,"2026-10-09 10:42:11.402","2026-10-09 10:42:12.7"],
+   ["SG-ORCH-001",'{"event_id":"pos-SG001-T05-000201",…}',4,1048590,"2026-10-09 11:03:13.551","2026-10-09 11:03:15.0"],
+   ["TH-BKK-007",'{"event_id":"pos-TH007-T01-002291",…}',9,532118,"2026-10-09 17:07:12.004","2026-10-09 17:07:13.8"]],
+  {lake:true, flags:{0:["evo","still here"],2:["dup","still here: bronze keeps everything"],3:["bad","still here"],4:["late","still here"]}});
+
+const SILVER = T("retail.silver.sales_lines (one row per product line)",
+  ["event_id|STRING","line_no|INT","store_id|STRING","sku|STRING","qty|INT","unit_price|DECIMAL(10,2)","discount|DECIMAL(10,2)","net_amount|DECIMAL(12,2)||qty × price − discount","currency|STRING","event_ts_utc|TIMESTAMP||local text + offset → UTC","business_date|DATE||the store's local date","loyalty_id|STRING||null for old POS firmware"],
+  [["pos-MY014-T02-000977",1,"MY-KUL-014","SKU-20871",3,"7.50","4.50","18.00","MYR","2026-10-09 04:15:33","2026-10-09","L-55821"],
+   ["pos-SG001-T03-000184",1,"SG-ORCH-001","SKU-20871",2,"6.90","2.76","11.04","SGD","2026-10-09 10:42:07","2026-10-09",null],
+   ["pos-SG001-T03-000184",2,"SG-ORCH-001","SKU-10023",1,"3.95","0.00","3.95","SGD","2026-10-09 10:42:07","2026-10-09",null],
+   ["pos-TH007-T01-002291",1,"TH-BKK-007","SKU-31045",1,"289.00","0.00","289.00","THB","2026-10-09 16:58:40","2026-10-09",null]],
+  {lake:true, flags:{0:["evo","loyalty_id added by schema evolution"],3:["late","arrived after local midnight, still business_date 9 Oct (event time, not arrival time)"]}});
+
+const SILVER_STOCK = T("retail.silver.dc_stock (current stock, business names)",
+  ["dc_id|STRING|pk|WERKS 'SG01' → 'DC-SG-01'","sku|STRING|pk|MATNR '000000000000020871' → 'SKU-20871'","on_hand_qty|INT","as_of|TIMESTAMP"],
+  [["DC-SG-01","SKU-20871",1180,"2026-10-09 15:30:00"],["DC-TH-02","SKU-31045",96,"2026-10-08 17:00:00"],["DC-SG-01","SKU-10023",3310,"2026-10-09 09:10:00"]],
+  {lake:true});
+
+const GOLD = T("retail.gold.daily_store_sku (materialized view)",
+  ["business_date|DATE","store_id|STRING","sku|STRING","units|BIGINT","net_revenue|DECIMAL(14,2)","currency|STRING","txn_count|BIGINT","is_promo|BOOLEAN||joined from the promo calendar"],
+  [["2026-10-09","SG-ORCH-001","SKU-20871",186,"1026.72","SGD",141,true],
+   ["2026-10-09","SG-ORCH-001","SKU-10023",64,"252.80","SGD",60,false],
+   ["2026-10-09","MY-KUL-014","SKU-20871",233,"1398.00","MYR",170,true],
+   ["2026-10-09","TH-BKK-007","SKU-31045",21,"6069.00","THB",21,false]],
+  {lake:true, flags:{0:["hl","includes E1's 2 units plus the rest of the day"]}, foot:"Full-day totals. The four silver rows above are part of these numbers (for example E1 contributes 2 of the 186 units)."});
+
+const GOLD_STOCK = T("retail.gold.dc_stock_daily",
+  ["business_date|DATE","dc_id|STRING","sku|STRING","on_hand_eod|INT||end-of-day stock","open_po_qty|INT||ordered, not yet received","served_stores|INT"],
+  [["2026-10-09","DC-SG-01","SKU-20871",1180,600,38],["2026-10-09","DC-SG-01","SKU-10023",3310,0,38],["2026-10-09","DC-TH-02","SKU-31045",96,0,22]],
+  {lake:true});
+
+const FEAT = T("retail.features.store_sku_daily (feature table)",
+  ["store_id|STRING|pk","sku|STRING|pk","business_date|DATE|ts|TIMESERIES key: enables point-in-time joins","units_lag_7|INT||same weekday last week","units_mean_28|DOUBLE||28-day average","dow|INT||1 = Monday","is_promo|BOOLEAN","discount_pct|DOUBLE","promo_days_left|INT"],
+  [["SG-ORCH-001","SKU-20871","2026-10-09",92,88.4,5,true,20.0,3],["SG-ORCH-001","SKU-10023","2026-10-09",61,58.9,5,false,0.0,0],
+   ["MY-KUL-014","SKU-20871","2026-10-09",118,109.6,5,true,20.0,3],["TH-BKK-007","SKU-31045","2026-10-09",19,17.3,5,false,0.0,0]]);
+
+const FORECAST = T("retail.gold.dc_sku_forecast",
+  ["dc_id|STRING","sku|STRING","forecast_date|DATE","horizon_day|INT","p10|DOUBLE","p50|DOUBLE||median: used for ordering","p90|DOUBLE||high case: used for risk","model_version|INT","scored_at|TIMESTAMP"],
+  [["DC-SG-01","SKU-20871","2026-10-10",1,398,452,521,7,"2026-10-09 18:30:00"],["DC-SG-01","SKU-20871","2026-10-11",2,410,468,540,7,"2026-10-09 18:30:00"],
+   ["DC-SG-01","SKU-20871","2026-10-12",3,385,441,509,7,"2026-10-09 18:30:00"],["DC-SG-01","SKU-20871","2026-10-13",4,240,288,345,7,"2026-10-09 18:30:00"],
+   ["DC-TH-02","SKU-31045","2026-10-10",1,48,63,81,7,"2026-10-09 18:30:00"]],
+  {lake:true, flags:{3:["chg","promo ends 12 Oct: demand drops"]}, foot:"30 rows per DC × SKU in reality (horizon 1–30); 5 shown."});
+
+const PROMO_CSV = `sku,store_scope,start_date,end_date,promo_type,discount_pct
+SKU-20871,SG|MY,2026-10-09,2026-10-12,PCT_OFF,20
+SKU-31045,TH,2026-10-20,2026-10-26,PCT_OFF,15
+SKU-10023,SG,2026-10-16,2026-10-18,BUY2_SAVE,10`;
+
+const DATA = {
+ pos:{
+  what:"Each checkout makes the POS send one JSON event; one event holds several items (nested lines).",
+  in:null,
+  out:J("POS event payload, one JSON document per basket",[
+    {label:"E1 normal basket (2 lines)", flag:"ok", obj:E1},
+    {label:"E2 the same basket re-sent after a network retry", flag:"dup", obj:E2},
+    {label:"E3 Bangkok, sold 23:58, reached Kafka at 00:07 the next day", flag:"late", obj:E3},
+    {label:"E4 new POS firmware adds loyalty_id", flag:"evo", obj:E4},
+    {label:"E5 scanner glitch: no SKU, qty 0", flag:"bad", obj:E5}], POS_COLS),
+  why:"The raw events have six typical problems planted on purpose: time is a local-time “string”, one event holds several items, events get resent (E2), events arrive late (E3), a firmware upgrade adds a new field (E4), and there is occasional bad data (E5). Each later step deals with them one by one."
+ },
+ ext:{
+  what:"The promotions team drops a CSV into S3 every week; weather and holidays are similar external files or APIs.",
+  in:null,
+  out:X("s3://retail-landing/promo/2026-10-08/promo_SEA.csv", PROMO_CSV,
+    ["sku|text","store_scope|text||two countries packed into one cell (SG and MY)","start_date|text","end_date|text","promo_type|text","discount_pct|text"]),
+  why:"CSV has no types: dates and numbers are just text; store_scope joins several countries with |. Downstream must split it and cast types before it can be joined with sales data."
+ },
+ erp:{
+  what:"The ERP inventory table (SAP as the example). This is the system of record; the platform only reads it and never changes it.",
+  in:null,
+  out:T("SAP table MARD (stock per plant and storage location)",
+    ["MATNR|CHAR(18)|pk|material number, zero-padded (40 chars on S/4HANA)","WERKS|CHAR(4)|pk|plant = warehouse","LGORT|CHAR(4)|pk|storage location","LABST|QUAN(13,3)||unrestricted stock"],
+    [["000000000000020871","SG01","0001","1180.000"],["000000000000031045","TH02","0001","96.000"],["000000000000010023","SG01","0001","3310.000"]],
+    {flags:{0:["chg","23:30 SGT picking for store deliveries: 1240 → 1180"]}}),
+  why:"SAP column names are German abbreviations: MATNR material number, WERKS plant, LGORT storage location, LABST unrestricted stock; material numbers are zero-padded to 18 digits. In silver these all become business names and the SKU format."
+ },
+ stream:{
+  what:"POS events are written to a Kafka topic. Kafka does not parse the content; it only stores bytes plus position information.",
+  in:T("Events sent by the tills (from step 1)", ["event_id|string","store_id|string","send_attempt|int","bytes|int"],
+    [["pos-MY014-T02-000977","MY-KUL-014",1,412],["pos-SG001-T03-000184","SG-ORCH-001",1,398],["pos-SG001-T03-000184","SG-ORCH-001",2,398],["pos-SG001-T05-000201","SG-ORCH-001",1,341],["pos-TH007-T01-002291","TH-BKK-007",1,356]],
+    {flags:{0:["evo",""],2:["dup","retry"],3:["bad",""],4:["late",""]}}),
+  out:KAFKA,
+  why:"The Kafka schema is always these seven columns (key, value, topic, partition, offset, timestamp, timestampType); your fields are all wrapped inside value as BINARY. With store_id as the key, the same store always goes to the same partition, so ordering is guaranteed. Kafka does not remove duplicates caused by POS resends; that is silver's job.",
+  aws:{why:"MSK is Kafka, so this cell is identical on both sides: same topic, same schema. If you use Kinesis Data Streams instead, the equivalent concepts are partition key, shard and sequence number. Duplicates from POS resends still have to be removed downstream."},
+  code:{lang:"Bash", text:`kafka-topics.sh --create --topic pos.sales.v1 \\
+  --partitions 12 --replication-factor 3 \\
+  --bootstrap-server <brokers>        # Confluent, self-managed, or Amazon MSK`}
+ },
+ files:{
+  what:"Incrementally load new files arriving in S3 into a table; files already processed are not read again.",
+  in:X("s3://retail-landing/promo/ (two new files)", `promo_SEA.csv
+${PROMO_CSV}
+
+promo_vendorX.csv   (a vendor added a column)
+sku,store_scope,start_date,end_date,promo_type,discount_pct,max_per_customer
+SKU-20871,TH,2026-11-01,2026-11-03,PCT_OFF,10,4`,
+    ["sku|text","store_scope|text","start_date|text","end_date|text","promo_type|text","discount_pct|text","max_per_customer|text||only in the vendor file"]),
+  out:T("retail.bronze.promo_calendar (streaming table via Auto Loader)",
+    ["sku|STRING","store_scope|STRING","start_date|STRING||still text","end_date|STRING","promo_type|STRING","discount_pct|STRING||CSV columns are inferred as STRING by default","_rescued_data|STRING|sys|added by Auto Loader","_source_file|STRING|sys|from _metadata.file_path"],
+    [["SKU-20871","SG|MY","2026-10-09","2026-10-12","PCT_OFF","20",null,"…/promo_SEA.csv"],["SKU-31045","TH","2026-10-20","2026-10-26","PCT_OFF","15",null,"…/promo_SEA.csv"],
+     ["SKU-10023","SG","2026-10-16","2026-10-18","BUY2_SAVE","10",null,"…/promo_SEA.csv"],
+     ["SKU-20871","TH","2026-11-01","2026-11-03","PCT_OFF","10",'{"max_per_customer":"4","_file_path":"…/promo_vendorX.csv"}',"…/promo_vendorX.csv"]],
+    {flags:{3:["evo","rescue mode: the unknown column is kept in _rescued_data, not dropped"]}}),
+  why:"Auto Loader (cloudFiles) only processes newly arrived files. Two details to remember: (1) CSV / JSON columns are inferred as STRING by default (unless you enable cloudFiles.inferColumnTypes), leaving type casting to silver; (2) it adds _rescued_data automatically, so values that do not match the schema land in this column instead of disappearing. When a new column appears, the default addNewColumns mode stops, updates the schema and restarts; rescue mode holds the values as in the table above.",
+  code:{lang:"SQL (Lakeflow pipeline)", text:`CREATE OR REFRESH STREAMING TABLE retail.bronze.promo_calendar AS
+SELECT *, _metadata.file_path AS _source_file
+FROM STREAM read_files(
+  's3://retail-landing/promo/',
+  format => 'csv', header => true);`},
+  aws:{
+   out:T("Glue Data Catalog: bronze.promo_calendar (Glue job with job bookmarks)",
+    ["sku|string","store_scope|string","start_date|string","end_date|string","promo_type|string","discount_pct|bigint||Glue infers numbers","max_per_customer|bigint|new|new column added to the table","ingest_date|string|part|partition column"],
+    [["SKU-20871","SG|MY","2026-10-09","2026-10-12","PCT_OFF",20,null,"2026-10-08"],["SKU-31045","TH","2026-10-20","2026-10-26","PCT_OFF",15,null,"2026-10-08"],
+     ["SKU-10023","SG","2026-10-16","2026-10-18","BUY2_SAVE",10,null,"2026-10-08"],["SKU-20871","TH","2026-11-01","2026-11-03","PCT_OFF",10,4,"2026-10-30"]],
+    {flags:{3:["evo","schema changed: catalog must be updated"]}}),
+   why:"A Glue job uses a job bookmark to remember which files it has processed (via transformation_ctx, saved by job.commit() at the end). Types are inferred by Glue, and numbers become bigint. When a new column appears, the DynamicFrame carries it, but the catalog schema has to be updated separately; there is no 'hold it for now' column like _rescued_data.",
+   code:{lang:"Python (AWS Glue job)", text:`src = glueContext.create_dynamic_frame.from_options(
+    connection_type="s3", format="csv",
+    connection_options={"paths": ["s3://retail-landing/promo/"]},
+    format_options={"withHeader": True},
+    transformation_ctx="promo_src")          # bookmark key
+glueContext.write_dynamic_frame.from_catalog(
+    frame=src, database="bronze", table_name="promo_calendar")
+job.commit()                                 # saves the bookmark`}
+  }
+ },
+ cdc:{
+  what:"Continuously capture changes from the ERP database (CDC) instead of a full table dump every night.",
+  in:T("SAP MARD now (step 3)", ["MATNR|CHAR(18)|pk","WERKS|CHAR(4)|pk","LGORT|CHAR(4)|pk","LABST|QUAN(13,3)"],
+    [["000000000000020871","SG01","0001","1180.000"],["000000000000031045","TH02","0001","96.000"],["000000000000010023","SG01","0001","3310.000"]],
+    {flags:{0:["chg","was 1240 until 23:30 SGT"]}}),
+  out:T("retail.bronze.sap_mard (history tracking = SCD type 2)",
+    ["MATNR|STRING|pk","WERKS|STRING|pk","LGORT|STRING|pk","LABST|DECIMAL(13,3)","__START_AT|TIMESTAMP|sys|this version valid from","__END_AT|TIMESTAMP|sys|null = current version"],
+    [["000000000000020871","SG01","0001","1240.000","2026-10-09 14:00:00","2026-10-09 15:30:00"],["000000000000020871","SG01","0001","1180.000","2026-10-09 15:30:00",null],
+     ["000000000000031045","TH02","0001","96.000","2026-10-08 17:00:00",null],["000000000000010023","SG01","0001","3310.000","2026-10-09 09:10:00",null]],
+    {flags:{0:["closed","old version closed, not overwritten"],1:["hl","current version"]}}),
+  why:"SCD type 2 means every change keeps a version, with __START_AT / __END_AT marking the valid period. Old versions are 'closed' rather than overwritten, so you can answer 'what was the stock at 10 pm last night', which is exactly the history model training needs. Database-based ERPs can use a Lakeflow Connect database connector; for SAP, Delta Sharing through SAP Business Data Cloud is also common in practice, depending on the customer's SAP version.",
+  code:{lang:"SQL (Lakeflow pipeline, from a change feed)", text:`CREATE OR REFRESH STREAMING TABLE retail.bronze.sap_mard;
+
+CREATE FLOW sap_mard_cdc AS AUTO CDC INTO retail.bronze.sap_mard
+FROM STREAM(retail.raw.sap_mard_changes)
+KEYS (MATNR, WERKS, LGORT)
+SEQUENCE BY change_ts
+STORED AS SCD TYPE 2;`},
+  aws:{
+   out:T("s3://retail-raw/dms/SAPSR3/MARD/ (DMS CDC files, Parquet)",
+    ["Op|string|sys|I / U / D, added by DMS","cdc_ts|timestamp|sys|commit time (TimestampColumnName setting)","MATNR|string","WERKS|string","LGORT|string","LABST|decimal(13,3)"],
+    [["U","2026-10-09 15:30:02","000000000000020871","SG01","0001","1180.000"]],
+    {flags:{0:["chg","only the change arrives; merging it into a current or history table is your job"]}}),
+   why:"Each row of a DMS CDC file has an extra Op column (I / U / D) and carries only the change itself. To merge it into the latest state or an SCD2 history table, you write MERGE INTO yourself in Glue / EMR. Zero-ETL gives you a replicated table directly (latest state), but does not keep every version.",
+   code:{lang:"JSON (DMS S3 target endpoint settings)", text:`{
+  "BucketName": "retail-raw",
+  "BucketFolder": "dms",
+  "DataFormat": "parquet",
+  "CdcPath": "cdc",
+  "TimestampColumnName": "cdc_ts"
+}`}
+  }
+ },
+ rtc:{
+  what:"Compute “units sold in the last 15 / 60 minutes” from the live event stream and write it straight to the online feature store.",
+  in:T("Parsed sales lines, last hour (Saturday 10 Oct)", ["store_id|STRING","sku|STRING","qty|INT","event_ts_utc|TIMESTAMP"],
+    [["SG-ORCH-001","SKU-20871",2,"2026-10-10 01:16:05"],["SG-ORCH-001","SKU-20871",1,"2026-10-10 01:31:47"],["SG-ORCH-001","SKU-20871",3,"2026-10-10 01:58:20"],
+     ["SG-ORCH-001","SKU-20871",2,"2026-10-10 02:03:11"],["SG-ORCH-001","SKU-20871",4,"2026-10-10 02:09:40"],["SG-ORCH-001","SKU-20871",1,"2026-10-10 02:13:02"]],
+    {flags:{3:["hl","inside the last 15 min"],4:["hl",""],5:["hl",""]}}),
+  out:T("Stream features for SG-ORCH-001 × SKU-20871", ["store_id|STRING|pk","sku|STRING|pk","window_end|TIMESTAMP|ts","units_15m|INT||2 + 4 + 1","units_60m|INT||all six events"],
+    [["SG-ORCH-001","SKU-20871","2026-10-10 02:15:00",7,13]]),
+  why:"Individual events → sliding-window aggregates: slide every 5 minutes, computing the last 15 minutes (7 units) and 60 minutes (13 units). Databricks uses Structured Streaming (real-time mode) through Stream Feature Views to write straight to the Online Feature Store; the same Spark engine also does batch.",
+  code:{lang:"Python (Structured Streaming)", text:`from pyspark.sql import functions as F
+feats = (spark.readStream.table("retail.silver.sales_lines")
+    .withWatermark("event_ts_utc", "10 minutes")
+    .groupBy("store_id", "sku",
+             F.window("event_ts_utc", "15 minutes", "5 minutes"))
+    .agg(F.sum("qty").alias("units_15m")))`},
+  aws:{
+   out:T("Feature Store record written by Flink (PutRecord)", ["store_sku|String|rid|record identifier = store#sku","event_time|String|et|required event time","units_15m|Integral","units_60m|Integral"],
+    [["SG-ORCH-001#SKU-20871","2026-10-10T02:15:00Z",7,13]]),
+   why:"On AWS this is usually Managed Service for Apache Flink computing sliding windows, then calling PutRecord to write into Feature Store. Note two things: Feature Store needs a record identifier (here store and SKU are concatenated into store_sku) and an event time; batch uses Spark and streaming uses Flink, which are two separate engines.",
+   code:{lang:"SQL (Flink SQL on Managed Flink)", text:`SELECT store_id, sku, window_end, SUM(qty) AS units_15m
+FROM TABLE(
+  HOP(TABLE pos_lines, DESCRIPTOR(event_ts),
+      INTERVAL '5' MINUTES, INTERVAL '15' MINUTES))
+GROUP BY store_id, sku, window_start, window_end;`}
+  }
+ },
+ bronze:{
+  what:"Land it as is: each Kafka message becomes one row in a table, plus “where it came from and when it arrived”.",
+  in:KAFKA, out:BRONZE,
+  why:"Bronze does one thing: keep everything. Duplicates (E2), bad records (E5) and late arrivals (E3) are all kept, and the payload is still the raw JSON string. The benefit: if the cleaning logic changes later, you can recompute silver and gold from bronze without going back to the source systems.",
+  code:{lang:"SQL (Lakeflow pipeline)", text:`CREATE OR REFRESH STREAMING TABLE retail.bronze.pos_events AS
+SELECT CAST(key AS STRING)   AS kafka_key,
+       CAST(value AS STRING) AS payload,
+       partition, offset,
+       timestamp             AS kafka_ts,
+       current_timestamp()   AS _ingested_at
+FROM STREAM read_kafka(
+  bootstrapServers => '<brokers>',
+  subscribe        => 'pos.sales.v1');`},
+  aws:{
+   why:"On AWS the same table is an Iceberg table in S3 Tables (type names follow Iceberg: string, long, timestamptz…), usually written directly from MSK by Amazon Data Firehose, or by a Glue streaming job. The concept is identical: keep the data as is and add metadata columns.",
+   code:{lang:"JSON (Firehose: MSK → Iceberg table in S3 Tables)", text:`{
+  "DeliveryStreamType": "MSKAsSource",
+  "IcebergDestinationConfiguration": {
+    "CatalogConfiguration": {
+      "CatalogARN": "arn:aws:glue:ap-southeast-1:111122223333:catalog/s3tablescatalog/retail-lake" },
+    "DestinationTableConfigurationList": [
+      { "DestinationDatabaseName": "bronze", "DestinationTableName": "pos_events" } ]
+  }
+}`}
+  }
+ },
+ silver:{
+  what:"Clean and standardize: dedupe, drop bad data, flatten nesting, convert time zones and types.",
+  in:BRONZE, out:SILVER,
+  extra:[
+   T("Pipeline event log: data quality for this update", ["rule|STRING","rows_dropped|BIGINT","example|STRING"],
+     [["dedupe on event_id",1,"pos-SG001-T03-000184, send_attempt 2"],["valid_line: sku IS NOT NULL AND qty <> 0",1,"pos-SG001-T05-000201"]],
+     {flags:{0:["dup",""],1:["bad",""]}}),
+   SILVER_STOCK],
+  why:"Silver does six things in order: (1) deduplicate on event_id, so E2 disappears; (2) an expectation drops E5 and counts it, with the number written to the event log; (3) flatten the nested lines into one row per item, so E1 becomes two rows; (4) local time strings plus time zone → UTC timestamp, while keeping the store's local business_date, so the late E3 still counts for the 9th; (5) cast amounts to DECIMAL; (6) loyalty_id is added through schema evolution, null for old data. ERP inventory is also renamed to business names in this layer (second table below).",
+  code:{lang:"Python (Lakeflow pipeline)", text:`from pyspark import pipelines as dp
+from pyspark.sql import functions as F
+
+@dp.table(name="retail.silver.sales_lines")
+@dp.expect_or_drop("valid_line", "sku IS NOT NULL AND qty <> 0")
+def sales_lines():
+    e = (spark.readStream.table("retail.bronze.pos_events")
+           .select(F.from_json("payload", POS_SCHEMA).alias("e")).select("e.*")
+           .withColumn("event_ts_utc", F.to_timestamp(
+               F.concat_ws(" ", "event_ts_local", "tz_offset"),
+               "yyyy-MM-dd HH:mm:ss XXX"))
+           .withWatermark("event_ts_utc", "2 hours")
+           .dropDuplicatesWithinWatermark(["event_id"]))
+    return (e.select("*", F.posexplode("lines").alias("pos", "l"))
+             .select("event_id", (F.col("pos") + 1).alias("line_no"),
+                     "store_id", "l.sku", "l.qty", "l.unit_price", "l.discount",
+                     (F.col("l.qty") * F.col("l.unit_price") - F.col("l.discount"))
+                         .cast("decimal(12,2)").alias("net_amount"),
+                     "currency", "event_ts_utc",
+                     F.to_date("event_ts_local").alias("business_date"),
+                     "loyalty_id"))`},
+  aws:{
+   extra:[
+    T("Glue Data Quality results (DQDL ruleset)", ["rule|string","outcome|string","failed_rows|long"],
+      [['IsComplete "sku"',"Failed",1],['ColumnValues "qty" != 0',"Failed",1]], {flags:{0:["bad",""],1:["bad",""]}}),
+    SILVER_STOCK],
+   why:"You write the same logic yourself in Spark on Glue or EMR Serverless (dropDuplicates, explode, to_timestamp) and write to Iceberg tables in S3 Tables. Data quality uses Glue Data Quality DQDL rules, and the results are stored separately; to “drop bad rows” you filter them yourself, unlike an expectation, where one decorator both blocks and counts them.",
+   code:{lang:"DQDL + PySpark (AWS Glue)", text:`# Glue Data Quality ruleset
+Rules = [ IsComplete "sku", ColumnValues "qty" != 0 ]
+
+# Spark job (Glue / EMR Serverless)
+df = (bronze.dropDuplicates(["event_id"])
+            .withColumn("l", F.explode("lines"))
+            .filter("l.sku IS NOT NULL AND l.qty <> 0"))`}
+  }
+ },
+ gold:{
+  what:"Business grain: one row per day × store × SKU; then join the promotion calendar and warehouse stock.",
+  in:SILVER, out:GOLD, extra:[GOLD_STOCK],
+  why:"Gold is the 'answer table' for people and models: units, revenue and transaction counts are aggregated from silver, and a join with the promotion calendar gives is_promo. The other table holds each warehouse's closing stock and inbound purchase orders per day. BI dashboards and ML read the same gold, so the numbers match. The materialized view refreshes incrementally and automatically.",
+  code:{lang:"SQL (Lakeflow pipeline)", text:`CREATE OR REFRESH MATERIALIZED VIEW retail.gold.daily_store_sku AS
+SELECT s.business_date, s.store_id, s.sku,
+       SUM(s.qty)                  AS units,
+       SUM(s.net_amount)           AS net_revenue,
+       ANY_VALUE(s.currency)       AS currency,
+       COUNT(DISTINCT s.event_id)  AS txn_count,
+       BOOL_OR(p.sku IS NOT NULL)  AS is_promo
+FROM retail.silver.sales_lines s
+LEFT JOIN retail.silver.promo_calendar p
+  ON  p.sku = s.sku
+  AND p.country = LEFT(s.store_id, 2)
+  AND s.business_date BETWEEN p.start_date AND p.end_date
+GROUP BY ALL;`},
+  aws:{
+   why:"On AWS the same SQL can run in Athena or Glue Spark, with results written to an Iceberg table. The difference is refresh: there is no materialized view with automatic incremental refresh, so you schedule CTAS / MERGE INTO yourself (or use a Redshift materialized view).",
+   code:{lang:"SQL (Athena, Iceberg)", text:`MERGE INTO gold.daily_store_sku t
+USING (SELECT business_date, store_id, sku, SUM(qty) AS units, …
+       FROM silver.sales_lines WHERE business_date = DATE '2026-10-09'
+       GROUP BY 1, 2, 3) s
+ON  t.business_date = s.business_date AND t.store_id = s.store_id AND t.sku = s.sku
+WHEN MATCHED THEN UPDATE SET units = s.units, …
+WHEN NOT MATCHED THEN INSERT (business_date, store_id, sku, units, …)
+                      VALUES (s.business_date, s.store_id, s.sku, s.units, …);`}
+  }
+ },
+ fs_off:{
+  what:"Turn gold into the features the model needs; every feature value carries its “as of” date.",
+  in:GOLD, out:FEAT,
+  why:"A feature table is just a Delta table with a primary key: (store_id, sku) plus business_date as the TIMESERIES key. Training uses a point-in-time join: each sample only gets features known 'before that day', so there is no peeking into the future. The model remembers which features it used, and lineage connects all the way back to gold.",
+  code:{lang:"Python (Feature Engineering in Unity Catalog)", text:`from databricks.feature_engineering import FeatureEngineeringClient
+fe = FeatureEngineeringClient()
+fe.create_table(
+    name="retail.features.store_sku_daily",
+    primary_keys=["store_id", "sku", "business_date"],
+    timeseries_columns="business_date",
+    df=features_df)`},
+  aws:{
+   out:T("Feature group store-sku-daily, offline store (Iceberg table format)",
+    ["store_sku|String|rid|record identifier: store and SKU joined","event_time|String|et|required event time","units_lag_7|Integral","units_mean_28|Fractional","dow|Integral","is_promo|Integral||no boolean type: 1 / 0","discount_pct|Fractional","promo_days_left|Integral",
+     "write_time|timestamp|sys|added by Feature Store","api_invocation_time|timestamp|sys|added by Feature Store","is_deleted|boolean|sys|added by Feature Store"],
+    [["SG-ORCH-001#SKU-20871","2026-10-09T23:59:59+08:00",92,88.4,5,1,20.0,3,"2026-10-09 16:12:40","2026-10-09 16:05:02",false],
+     ["SG-ORCH-001#SKU-10023","2026-10-09T23:59:59+08:00",61,58.9,5,0,0.0,0,"2026-10-09 16:12:40","2026-10-09 16:05:02",false],
+     ["MY-KUL-014#SKU-20871","2026-10-09T23:59:59+08:00",118,109.6,5,1,20.0,3,"2026-10-09 16:12:41","2026-10-09 16:05:03",false],
+     ["TH-BKK-007#SKU-31045","2026-10-09T23:59:59+07:00",19,17.3,5,0,0.0,0,"2026-10-09 17:12:05","2026-10-09 17:05:01",false]]),
+   why:"SageMaker Feature Store uses a different model: one record identifier (only a single column, so store and SKU are concatenated) plus an event time; there are only three feature types, Integral, Fractional and String, so booleans become 0/1; the offline store automatically adds three columns, write_time, api_invocation_time and is_deleted (written to S3 within about 15 minutes after PutRecord).",
+   code:{lang:"Python (SageMaker Python SDK)", text:`fg = FeatureGroup(name="store-sku-daily", sagemaker_session=sess)
+fg.load_feature_definitions(data_frame=features_df)
+fg.create(
+    s3_uri="s3://retail-fs/offline",
+    record_identifier_name="store_sku",
+    event_time_feature_name="event_time",
+    role_arn=ROLE,
+    enable_online_store=True,
+    table_format=TableFormatEnum.ICEBERG)`}
+  }
+ },
+ fs_on:{
+  what:"Online feature store: keeps only the latest record per key, for millisecond lookups.",
+  in:T("Inputs to the online store", ["source|STRING","store_id|STRING","sku|STRING","latest values|STRING"],
+    [["feature table (nightly)","SG-ORCH-001","SKU-20871","units_lag_7 97, units_mean_28 89.6, is_promo true, promo_days_left 2"],["stream features (step: real-time)","SG-ORCH-001","SKU-20871","units_15m 7, units_60m 13 at 02:15 UTC"]]),
+  out:T("Online Feature Store (Lakebase Postgres): one row per key", ["store_id|STRING|pk","sku|STRING|pk","units_lag_7|INT","units_mean_28|DOUBLE","is_promo|BOOLEAN","promo_days_left|INT","units_15m|INT","units_60m|INT","_updated_at|TIMESTAMP|sys"],
+    [["SG-ORCH-001","SKU-20871",97,89.6,true,2,7,13,"2026-10-10 02:15:04"]]),
+  why:"The offline feature table is for training and the online copy is for serving, both from the same definition, which avoids training/serving skew (feature logic that differs between training and production). The online store is powered by Lakebase, which is Postgres underneath, so you can also query it directly with SQL.",
+  code:{lang:"SQL (Postgres, Lakebase)", text:`SELECT units_lag_7, units_mean_28, is_promo, units_15m, units_60m
+FROM store_sku_daily_online
+WHERE store_id = 'SG-ORCH-001' AND sku = 'SKU-20871';`},
+  aws:{
+   out:J("GetRecord response", [{label:"All values come back as strings", obj:{Record:[
+     {FeatureName:"store_sku",ValueAsString:"SG-ORCH-001#SKU-20871"},{FeatureName:"event_time",ValueAsString:"2026-10-10T10:15:00+08:00"},
+     {FeatureName:"units_lag_7",ValueAsString:"97"},{FeatureName:"units_mean_28",ValueAsString:"89.6"},{FeatureName:"is_promo",ValueAsString:"1"},
+     {FeatureName:"promo_days_left",ValueAsString:"2"},{FeatureName:"units_15m",ValueAsString:"7"},{FeatureName:"units_60m",ValueAsString:"13"}]}}],
+     ["Record|list<struct<FeatureName,ValueAsString>>||every value is a string"]),
+   why:"The online store also keeps only the record with the latest event time. GetRecord returns a list of FeatureName / ValueAsString, so numbers are strings too and the caller has to cast them.",
+   code:{lang:"Python (boto3)", text:`fs = boto3.client("sagemaker-featurestore-runtime")
+rec = fs.get_record(
+    FeatureGroupName="store-sku-daily",
+    RecordIdentifierValueAsString="SG-ORCH-001#SKU-20871")`}
+  }
+ },
+ mlflow:{
+  what:"One training run = one MLflow run: it records parameters, metrics and artifacts.",
+  in:J("Training configuration", [{obj:{model_type:"lightgbm", objective:"tweedie", num_leaves:31, learning_rate:0.05, horizon_days:30, train_window_days:730, series:48210}}],
+    ["model_type|string","objective|string","num_leaves|int","learning_rate|double","horizon_days|int","train_window_days|int","series|int"]),
+  out:T("MLflow run in experiment /Shared/retail/demand", ["field|STRING","value|STRING"],
+    [["run_id","4f2c9d1e8a7b4c06"],["status","FINISHED"],["params.num_leaves","31"],["params.learning_rate","0.05"],["params.horizon_days","30"],
+     ["metrics.wmape_holdout","0.187"],["metrics.bias","-0.021"],["metrics.series_failed","12"],["tags.region","SEA"],["artifacts","model/, per_series_metrics.parquet, wmape_by_store.png"]],
+    {flags:{5:["hl","the number the gate compares"]}}),
+  why:"Both sides use MLflow, so this cell is almost identical: parameters, metrics, artifacts, tags. wMAPE (weighted mean absolute percentage error) is the most common metric in retail forecasting. The only difference is where the tracking server lives: on Databricks it is built in and natively integrated with Unity Catalog.",
+  code:{lang:"Python (MLflow)", text:`mlflow.set_experiment("/Shared/retail/demand")
+with mlflow.start_run():
+    mlflow.log_params({"num_leaves": 31, "learning_rate": 0.05, "horizon_days": 30})
+    mlflow.log_metric("wmape_holdout", 0.187)`},
+  aws:{
+   why:"Same MLflow API; the tracking server is the SageMaker AI MLflow App, and its ARN is the tracking URI. Models can be set to register automatically in SageMaker Model Registry.",
+   code:{lang:"Python (MLflow on SageMaker AI)", text:`mlflow.set_tracking_uri(
+    "arn:aws:sagemaker:ap-southeast-1:111122223333:mlflow-app/app-EXAMPLE")
+mlflow.set_experiment("retail-demand")`}
+  }
+ },
+ train:{
+  what:"Many-models: train one small model per store × SKU series, in parallel.",
+  in:T("Training set for one series (SG-ORCH-001 × SKU-20871), last 4 of 730 days",
+    ["store_id|STRING","sku|STRING","business_date|DATE","units|BIGINT||label","units_lag_7|INT","units_mean_28|DOUBLE","is_promo|BOOLEAN","dow|INT"],
+    [["SG-ORCH-001","SKU-20871","2026-10-06",84,90,87.9,false,2],["SG-ORCH-001","SKU-20871","2026-10-07",88,86,88.0,false,3],
+     ["SG-ORCH-001","SKU-20871","2026-10-08",91,89,88.1,false,4],["SG-ORCH-001","SKU-20871","2026-10-09",186,92,88.4,true,5]],
+    {flags:{3:["chg","promo day: units double"]}}),
+  out:T("applyInPandas output: one row per series", ["store_id|STRING","sku|STRING","n_train_days|INT","wmape_holdout|DOUBLE","model_path|STRING"],
+    [["SG-ORCH-001","SKU-20871",730,0.142,"…/series/SG-ORCH-001/SKU-20871.pkl"],["SG-ORCH-001","SKU-10023",730,0.118,"…/series/SG-ORCH-001/SKU-10023.pkl"],
+     ["MY-KUL-014","SKU-20871",512,0.171,"…/series/MY-KUL-014/SKU-20871.pkl"],["TH-BKK-007","SKU-31045",730,0.264,"…/series/TH-BKK-007/SKU-31045.pkl"]],
+    {flags:{3:["drift","slow mover: higher error is normal"]}, foot:"48,210 rows in the real run, one per series."}),
+  why:"groupBy(store, sku) distributes 48,000 series across Spark workers, and each is trained on its own. applyInPandas requires the output schema to be declared up front (the five columns in the table above); this is where the schema changes from 'training data' to 'training results'. In practice you wrap all the small models into one MLflow pyfunc 'router model' and register that; at serving time it picks the right small model by store and sku.",
+  code:{lang:"Python (PySpark)", text:`schema = "store_id string, sku string, n_train_days int, wmape_holdout double, model_path string"
+
+results = (train_df.groupBy("store_id", "sku")
+                   .applyInPandas(fit_one_series, schema=schema))`},
+  aws:{
+   out:J("DescribeTrainingJob (excerpt)", [{obj:{TrainingJobName:"demand-lgbm-sea-20261009", TrainingJobStatus:"Completed",
+     ModelArtifacts:{S3ModelArtifacts:"s3://retail-ml/models/demand-lgbm-sea-20261009/output/model.tar.gz"},
+     FinalMetricDataList:[{MetricName:"validation:wmape", Value:0.187}], BillableTimeInSeconds:2310}}],
+     ["TrainingJobName|string","TrainingJobStatus|string","ModelArtifacts.S3ModelArtifacts|string||model.tar.gz in S3","FinalMetricDataList|list||parsed from logs by regex","BillableTimeInSeconds|int"]),
+   why:"On SageMaker the unit is the training job: your script fans out inside the container itself (or you split into multiple jobs), the artifact is model.tar.gz on S3, and metrics are scraped from logs with a regex. The per-series results table has to be written to S3 by your script. For low code, you can use time series forecasting in SageMaker Canvas (per item ID); Amazon Forecast is no longer open to new customers.",
+   code:{lang:"Python (SageMaker Python SDK)", text:`from sagemaker.sklearn import SKLearn
+est = SKLearn(entry_point="train_many.py", framework_version="1.2-1",
+              role=ROLE, instance_type="ml.m5.4xlarge", instance_count=4,
+              metric_definitions=[{"Name": "validation:wmape",
+                                   "Regex": "wmape=([0-9.]+)"}])
+est.fit({"train": "s3://retail-ml/train/2026-10-09/"})`}
+  }
+ },
+ registry:{
+  what:"Register the trained model as a version, and use an alias to decide which one is live.",
+  in:J("Logged model from run 4f2c9d1e8a7b4c06", [{obj:{artifact_path:"model", flavor:"python_function", signature:{inputs:"store_id, sku, units_lag_7, units_mean_28, is_promo, …", outputs:"p10, p50, p90"}}}],
+    ["artifact_path|string","flavor|string","signature|struct<inputs,outputs>"]),
+  out:T("retail.ml.demand_forecaster: model versions in Unity Catalog", ["version|INT","aliases|ARRAY<STRING>","run_id|STRING","wmape_holdout|DOUBLE","created_at|TIMESTAMP","status|STRING"],
+    [[6,[],"9b1e07c2…",0.201,"2026-10-02 18:20:00","READY"],[7,["champion"],"4f2c9d1e…",0.187,"2026-10-09 18:05:00","READY"],[8,["challenger"],"c7a03f55…",0.183,"2026-10-10 03:05:00","READY"]],
+    {flags:{1:["hl","serving now"],2:["evo","retrained after the drift alert (feedback loop)"]}}),
+  why:"Model names are three-part like tables (catalog.schema.model), and version numbers increment automatically. Going live uses an alias: the endpoint points to @champion; switching versions means pointing the alias to 8, and rolling back means pointing it back to 7. Permissions and lineage are the same system as for tables.",
+  code:{lang:"Python (MLflow + Unity Catalog)", text:`mlflow.set_registry_uri("databricks-uc")
+mv = mlflow.register_model(f"runs:/{run_id}/model", "retail.ml.demand_forecaster")
+MlflowClient().set_registered_model_alias(
+    "retail.ml.demand_forecaster", "challenger", mv.version)`},
+  aws:{
+   out:T("Model package group demand-forecaster", ["ModelPackageVersion|int","ModelApprovalStatus|string||the deployment gate","ModelPackageArn|string","CreationTime|timestamp"],
+    [[6,"Approved","arn:aws:sagemaker:…:model-package/demand-forecaster/6","2026-10-02 18:20:00"],[7,"Approved","arn:aws:sagemaker:…:model-package/demand-forecaster/7","2026-10-09 18:05:00"],
+     [8,"PendingManualApproval","arn:aws:sagemaker:…:model-package/demand-forecaster/8","2026-10-10 03:05:00"]],
+    {flags:{1:["hl","deployed"],2:["evo","waiting for a human"]}}),
+   why:"SageMaker Model Registry manages versions with a model package group; the release gate is ModelApprovalStatus (PendingManualApproval → Approved), and deployment is usually triggered by an EventBridge event. Permissions go through IAM, separate from data permissions (Lake Formation).",
+   code:{lang:"Python (boto3)", text:`sm.update_model_package(
+    ModelPackageArn=arn_v8,
+    ModelApprovalStatus="Approved")   # EventBridge rule triggers the deploy`}
+  }
+ },
+ batch:{
+  what:"Every night, score each warehouse × SKU × next 30 days and write the results to a table.",
+  in:T("Scoring input for tonight (DC level)", ["dc_id|STRING","sku|STRING","forecast_date|DATE","horizon_day|INT","units_mean_28_dc|DOUBLE","is_promo|BOOLEAN","promo_days_left|INT"],
+    [["DC-SG-01","SKU-20871","2026-10-10",1,412.5,true,2],["DC-SG-01","SKU-20871","2026-10-13",4,412.5,false,0],["DC-TH-02","SKU-31045","2026-10-10",1,58.1,false,0]]),
+  out:FORECAST,
+  why:"The output is not a single number but quantiles: p10 / p50 / p90. Replenishment uses p50 plus safety stock; stockout risk is read from p90. Note that the promotion ends on the 13th and the forecast drops from 441 to 288: the model has learned the promotion effect. This gold table is read by ERP, dashboards and the agent alike.",
+  code:{lang:"Python (batch scoring in a Lakeflow Jobs task)", text:`predict = mlflow.pyfunc.spark_udf(
+    spark, "models:/retail.ml.demand_forecaster@champion")
+scored = score_df.withColumn("pred", predict(*feature_cols))
+scored.write.mode("overwrite").saveAsTable("retail.gold.dc_sku_forecast")`},
+  aws:{
+   out:X("s3://retail-ml/batch-out/2026-10-09/part-00000.csv.out", `DC-SG-01,SKU-20871,2026-10-10,1,398,452,521
+DC-SG-01,SKU-20871,2026-10-11,2,410,468,540
+DC-SG-01,SKU-20871,2026-10-12,3,385,441,509
+DC-SG-01,SKU-20871,2026-10-13,4,240,288,345
+DC-TH-02,SKU-31045,2026-10-10,1,48,63,81`,
+    ["dc_id|text||joined back from the input","sku|text","forecast_date|text","horizon_day|text","p10|text","p50|text","p90|text"]),
+   why:"Batch Transform reads input files on S3 and writes output files with the same name plus .out. join_source='Input' joins the input ID columns back onto the output; otherwise you get only a list of predictions and cannot tell which warehouse and SKU each belongs to. It becomes a 'table' only after you load it into Iceberg or Redshift.",
+   code:{lang:"Python (SageMaker Python SDK)", text:`tf = model.transformer(instance_count=2, instance_type="ml.m5.xlarge",
+                       output_path="s3://retail-ml/batch-out/2026-10-09/",
+                       accept="text/csv")
+tf.transform("s3://retail-ml/batch-in/2026-10-09/", content_type="text/csv",
+             split_type="Line", join_source="Input")`}
+  }
+ },
+ inv:{
+  what:"Forecast + on hand + in transit + safety stock → suggested order quantity, sent back to ERP for approval.",
+  in:T("Inputs for DC-SG-01 × SKU-20871", ["item|STRING","value|STRING"],
+    [["on_hand_eod (gold)","1180"],["open_po_qty (gold)","600"],["p50, next 7 days (forecast)","452 + 468 + 441 + 288 + 275 + 262 + 270 = 2456"],["safety_stock (policy)","420"],["case_pack (supplier terms)","24"]]),
+  out:T("Suggested purchase order sent to ERP", ["dc_id|STRING","sku|STRING","suggested_qty|INT||2456 + 420 − 1180 − 600","order_qty|INT||rounded up to 46 cases × 24","need_by|DATE","status|STRING"],
+    [["DC-SG-01","SKU-20871",1096,1104,"2026-10-13","PENDING_APPROVAL"]], {flags:{0:["hl","a planner approves in the ERP"]}}),
+  why:"The forecast itself does not place orders. Suggested quantity = next 7 days demand + safety stock − on hand − in transit = 1096, rounded up to the case size of 24 to get 1104 (46 cases). ERP is still the ordering system; the platform only sends a “suggestion” for the planner to approve.",
+  code:{lang:"SQL", text:`SELECT f.dc_id, f.sku,
+       SUM(f.p50) + 420 - s.on_hand_eod - s.open_po_qty            AS suggested_qty,
+       CEIL((SUM(f.p50) + 420 - s.on_hand_eod - s.open_po_qty) / 24) * 24 AS order_qty
+FROM retail.gold.dc_sku_forecast f
+JOIN retail.gold.dc_stock_daily s USING (dc_id, sku)
+WHERE f.horizon_day <= 7 AND s.business_date = DATE'2026-10-09'
+GROUP BY f.dc_id, f.sku, s.on_hand_eod, s.open_po_qty;`},
+  aws:{
+   why:"The calculation is exactly the same: next 7 days p50 + safety stock − on hand − in transit = 1096, rounded up to the case size of 24 to get 1104. On AWS this SQL usually runs in Athena against the Iceberg table, and the result goes back to ERP by API or file for the planner to approve.",
+   code:{lang:"SQL (Athena, Iceberg tables in S3 Tables)", text:`SELECT f.dc_id, f.sku,
+       SUM(f.p50) + 420 - s.on_hand_eod - s.open_po_qty            AS suggested_qty,
+       CEIL((SUM(f.p50) + 420 - s.on_hand_eod - s.open_po_qty) / 24.0) * 24 AS order_qty
+FROM "s3tablescatalog/retail-lake"."gold"."dc_sku_forecast" f
+JOIN "s3tablescatalog/retail-lake"."gold"."dc_stock_daily" s
+  ON f.dc_id = s.dc_id AND f.sku = s.sku
+WHERE f.horizon_day <= 7 AND s.business_date = DATE '2026-10-09'
+GROUP BY f.dc_id, f.sku, s.on_hand_eod, s.open_po_qty;`}
+  }
+ },
+ rt:{
+  what:"The store manager app asks in real time: how many more of this SKU will sell today?",
+  in:J("Request: POST /serving-endpoints/demand-forecaster/invocations", [{label:"Only the keys: the endpoint looks up features itself", obj:{dataframe_records:[{store_id:"SG-ORCH-001", sku:"SKU-20871", as_of:"2026-10-10T10:15:00+08:00"}]}}],
+    ["dataframe_records|list<struct<store_id,sku,as_of>>"]),
+  out:J("Response", [{obj:{predictions:[{p10:182.0, p50:205.0, p90:236.0}]}}], ["predictions|list<struct<p10,p50,p90>>"]),
+  why:"The request carries only the keys (store, SKU). The endpoint uses automatic feature lookup to fetch units_15m, units_lag_7 and other features from the Online Feature Store itself, so the app stays thin and cannot drift from the feature logic used in training. Every request and response is logged to the inference table (see the feedback loop step).",
+  code:{lang:"Bash", text:`curl -X POST "$DATABRICKS_HOST/serving-endpoints/demand-forecaster/invocations" \\
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \\
+  -d '{"dataframe_records":[{"store_id":"SG-ORCH-001","sku":"SKU-20871"}]}'`},
+  aws:{
+   in:J("InvokeEndpoint body (built by a Lambda)", [{label:"The caller fetched the features first with GetRecord", obj:{instances:[{store_id:"SG-ORCH-001", sku:"SKU-20871", units_lag_7:97, units_mean_28:89.6, is_promo:1, promo_days_left:2, units_15m:7, units_60m:13, dow:6}]}}],
+     ["instances|list<struct<store_id,sku,units_lag_7,…,units_15m,units_60m,dow>>||features included by the caller"]),
+   out:J("Response (format defined by your inference container)", [{obj:{predictions:[{p10:182.0, p50:205.0, p90:236.0}]}}], ["predictions|list<struct<p10,p50,p90>>"]),
+   why:"A SageMaker endpoint does not look up features for you: Lambda has to call GetRecord first, convert strings to numbers, build the body, then call InvokeEndpoint. The request and response format is defined by the inference container.",
+   code:{lang:"Python (boto3, inside the Lambda)", text:`rt = boto3.client("sagemaker-runtime")
+resp = rt.invoke_endpoint(EndpointName="demand-forecaster",
+                          ContentType="application/json",
+                          Body=json.dumps(payload))`}
+  }
+ },
+ sales:{
+  what:"What the store manager sees is not a chart but an action.",
+  in:T("Inputs at 10:15 Saturday", ["item|STRING","value|STRING"],
+    [["forecast today, p50 (endpoint)","205"],["sold so far today","31"],["on the shelf","40"],["in the backroom","96"]]),
+  out:T("Store manager app: SG-ORCH-001", ["sku|STRING","forecast_today|INT","sold_so_far|INT","on_shelf|INT","backroom|INT","action|STRING"],
+    [["SKU-20871",205,31,40,96,"Top up 60 from the backroom before 12:00"]], {flags:{0:["hl","promo weekend"]}}),
+  why:"Today's forecast is 205, 31 already sold, so 174 still to go; the shelf has only 40 left, so restock 60 from the back room before noon. This is the output the store needs. On Databricks this app can be a Databricks App that reads the endpoint and Lakebase.",
+  aws:{why:"On AWS this app is usually API Gateway + Lambda calling the endpoint, with the front end hosted separately. The calculation logic is the same."}
+ },
+ monitor:{
+  what:"Log every prediction and track whether data and predictions drift; drift triggers retraining.",
+  in:T("Inference table of the serving endpoint (auto-logged)", ["request_date|DATE","databricks_request_id|STRING","request_time|TIMESTAMP","status_code|INT","execution_duration_ms|BIGINT","request|STRING","response|STRING","served_entity_id|STRING"],
+    [["2026-10-10","9c2b7e41-…","2026-10-10 02:15:03.118",200,38,'{"dataframe_records":[{"store_id":"SG-ORCH-001","sku":"SKU-20871"}]}','{"predictions":[{"p50":205.0}]}',"demand-forecaster-7"],
+     ["2026-10-10","1f80aa03-…","2026-10-10 02:15:07.402",200,41,'{"dataframe_records":[{"store_id":"MY-KUL-014","sku":"SKU-20871"}]}','{"predictions":[{"p50":248.0}]}',"demand-forecaster-7"],
+     ["2026-10-10","77d1c9be-…","2026-10-10 02:16:55.630",200,36,'{"dataframe_records":[{"store_id":"TH-BKK-007","sku":"SKU-31045"}]}','{"predictions":[{"p50":3.0}]}',"demand-forecaster-7"]]),
+  out:T("Drift metrics table (data profiling, inference profile)", ["window|STRUCT<start,end>","window_cmp|STRUCT<start,end>","drift_type|STRING","column_name|STRING","population_stability_index|DOUBLE","js_distance|DOUBLE"],
+    [[{start:"2026-10-10",end:"2026-10-11"},{start:"2026-10-09",end:"2026-10-10"},"CONSECUTIVE","discount_pct",0.41,0.29],
+     [{start:"2026-10-10",end:"2026-10-11"},{start:"2026-10-09",end:"2026-10-10"},"CONSECUTIVE","units_15m",0.12,0.08],
+     [{start:"2026-10-10",end:"2026-10-11"},null,"BASELINE","p50",0.27,0.19]],
+    {flags:{0:["chg","expected: the promo started"],2:["drift","predictions moved away from the training baseline → alert → retrain → version 8"]}}),
+  extra:[T("Anomaly detection on schema retail.bronze (summary)", ["table|STRING","freshness|STRING","completeness|STRING"],
+    [["retail.bronze.pos_events","healthy","healthy"],["retail.bronze.sap_mard","stale: no commit for 6 h","healthy"],["retail.bronze.promo_calendar","healthy","healthy"]],
+    {flags:{1:["drift","ERP feed late: check CDC before blaming the model"]}})],
+  why:"Model Serving automatically writes every request and response to an inference table (a Delta table). Data profiling computes distributions and drift on it and produces two tables, profile metrics and drift metrics (drift is shown above). Drift in discount_pct is the promotion starting, which is expected; only drift in p50 relative to the training baseline triggers retraining. Anomaly detection separately checks whether each table arrives on time and has a normal row count. Most forecasting incidents are actually late data.",
+  code:{lang:"Python (data profiling API)", text:`import databricks.lakehouse_monitoring as lm
+lm.create_monitor(
+    table_name="retail.ml.demand_forecaster_payload",
+    profile_type=lm.InferenceLog(
+        problem_type="regression", prediction_col="p50",
+        timestamp_col="request_time", model_id_col="served_entity_id",
+        granularities=["1 day"]),
+    output_schema_name="retail.monitoring")`},
+  aws:{
+   in:J("Data Capture record in S3 (JSON Lines)", [{obj:{captureData:{
+       endpointInput:{observedContentType:"application/json", mode:"INPUT", data:'{"instances":[{"store_id":"SG-ORCH-001","sku":"SKU-20871","units_15m":7}]}', encoding:"JSON"},
+       endpointOutput:{observedContentType:"application/json", mode:"OUTPUT", data:'{"predictions":[{"p50":205.0}]}', encoding:"JSON"}},
+     eventMetadata:{eventId:"0b7e3c1a-…", inferenceTime:"2026-10-10T02:15:03Z"}, eventVersion:"0"}}],
+     ["captureData.endpointInput|struct<observedContentType,mode,data,encoding>","captureData.endpointOutput|struct<…>","eventMetadata|struct<eventId,inferenceTime>","eventVersion|string"]),
+   out:J("Drift run logged to an MLflow App (Evidently AI)", [{obj:{experiment:"retail-monitoring", run:"drift-2026-10-10",
+       metrics:{drift_share:0.33, "psi.discount_pct":0.41, "psi.units_15m":0.12, "psi.prediction_p50":0.27}, alert:"SNS: drift_share 0.33 > 0.30 threshold"}}],
+     ["metrics.drift_share|double||share of drifted features","metrics.psi.*|double","alert|string"]),
+   extra:[],
+   why:"Important: SageMaker Model Monitor is closed to new customers. The official AWS alternative: turn on Data Capture on the endpoint to store requests/responses as JSON Lines in S3, compute drift with the open-source SageMaker AI monitoring solution (MLflow Apps + Evidently AI), alert with CloudWatch / SNS, and build governance dashboards in Quick Sight. You deploy and operate all of this yourself.",
+   code:{lang:"Python (SageMaker Python SDK)", text:`predictor = model.deploy(
+    initial_instance_count=1, instance_type="ml.c5.xlarge",
+    data_capture_config=DataCaptureConfig(
+        enable_capture=True, sampling_percentage=100,
+        destination_s3_uri="s3://retail-ml/data-capture/"))`}
+  }
+ },
+ genai:{
+  what:"The planner asks: why order 1,104 this week? The agent checks the data, the forecast and the contracts, then drafts the order.",
+  in:J("Planner question", [{obj:{user:"planner.sg@retail.example", question:"Why is DC-SG-01 ordering 1,104 units of SKU-20871 this week?"}}], ["user|string","question|string"]),
+  out:T("Agent trace (MLflow Tracing, stored in Unity Catalog)", ["span|STRING","type|STRING","input|STRING","output|STRING","latency_ms|BIGINT"],
+    [["replenishment_agent","AGENT","question","answer + draft PO",4120],
+     ["genie_ask","TOOL (Genie One MCP)","daily units, SKU-20871, last 14 days","promo lifted SG units from 92 to 186",1830],
+     ["get_forecast","TOOL (Model Serving)","DC-SG-01, SKU-20871, 7 days","p50 total 2,456",210],
+     ["search_supplier_terms","RETRIEVER (AI Search)","SKU-20871 supplier contract","case pack 24, lead time 3 days (clause 4.2)",340],
+     ["compose_answer","LLM (via Unity Gateway)","facts above","promo through 12 Oct; 46 cases needed by 13 Oct",1650],
+     ["create_draft_po","TOOL (UC function)","1104 units","PO-DRAFT-88213, PENDING_APPROVAL",90]],
+    {flags:{5:["hl","a human approves; the agent never places the order"]}, foot:"Child spans add up to the parent: 1830 + 210 + 340 + 1650 + 90 = 4120 ms."}),
+  why:"Every step of the agent is recorded as a span: which tool it used, which document it read, how long it took. Answers can be traced back to gold tables, the forecast endpoint and contract terms. That is auditable GenAI. The final step only 'drafts' the order; a person approves it.",
+  code:{lang:"Python (MLflow Tracing)", text:`import mlflow
+mlflow.set_experiment("/Shared/retail/replenishment-agent")
+
+@mlflow.trace(span_type="TOOL")
+def get_forecast(dc_id: str, sku: str, days: int = 7) -> float:
+    ...`},
+  aws:{
+   out:T("Agent trace (AgentCore Observability, OpenTelemetry spans in CloudWatch)", ["span|string","type|string","input|string","output|string","latency_ms|long"],
+    [["replenishment_agent","AGENT (AgentCore Runtime)","question","answer + draft PO",4120],
+     ["query_sales","TOOL (AgentCore Gateway → Lambda → Athena)","daily units, SKU-20871, last 14 days","promo lifted SG units from 92 to 186",1830],
+     ["get_forecast","TOOL (AgentCore Gateway → endpoint)","DC-SG-01, SKU-20871, 7 days","p50 total 2,456",210],
+     ["search_supplier_terms","RETRIEVER (Bedrock Knowledge Bases)","SKU-20871 supplier contract","case pack 24, lead time 3 days (clause 4.2)",340],
+     ["compose_answer","LLM (Amazon Bedrock)","facts above","promo through 12 Oct; 46 cases needed by 13 Oct",1650],
+     ["create_draft_po","TOOL (Gateway, checked by AgentCore Policy)","1104 units","PO-DRAFT-88213, PENDING_APPROVAL",90]],
+    {flags:{5:["hl","Policy allows drafting, not ordering"]}}),
+   why:"AgentCore Observability records spans with the same structure using OpenTelemetry (in CloudWatch); tools are wrapped as MCP through AgentCore Gateway, and AgentCore Policy decides what the agent can call. The structure is almost the same; the difference is that data and tool permissions belong to different services.",
+   code:{lang:"Python (Strands Agents on AgentCore Runtime)", text:`from bedrock_agentcore.runtime import BedrockAgentCoreApp
+from strands import Agent
+
+app = BedrockAgentCoreApp()
+agent = Agent(tools=gateway_tools)      # tools exposed by AgentCore Gateway
+
+@app.entrypoint
+def invoke(payload):
+    return {"result": str(agent(payload["question"]))}`}
+  }
+ },
+ "p:gov":{
+  what:"Same gold table, different people see different rows and columns.",
+  in:GOLD,
+  out:T("What a Thailand planner sees", ["business_date|DATE","store_id|STRING","sku|STRING","units|BIGINT","net_revenue|DECIMAL(14,2)||masked: not in the finance group","currency|STRING","txn_count|BIGINT","is_promo|BOOLEAN"],
+    [["2026-10-09","TH-BKK-007","SKU-31045",21,null,"THB",21,false]], {flags:{0:["hl","row filter: TH stores only; column mask: revenue null"]}}),
+  why:"Unity Catalog uses row filters (a function decides which rows you see) and column masks (a function decides how a column value is shown). Same table, same SQL: the Thailand buyer sees only TH rows and revenue masked to null. The column itself is still there, so the report structure does not change.",
+  code:{lang:"SQL (Unity Catalog)", text:`CREATE FUNCTION retail.gov.store_filter(store_id STRING)
+RETURN is_account_group_member('planners_all')
+    OR (is_account_group_member('planners_th') AND store_id LIKE 'TH-%');
+ALTER TABLE retail.gold.daily_store_sku
+  SET ROW FILTER retail.gov.store_filter ON (store_id);
+
+CREATE FUNCTION retail.gov.mask_revenue(v DECIMAL(14,2))
+RETURN CASE WHEN is_account_group_member('finance') THEN v ELSE NULL END;
+ALTER TABLE retail.gold.daily_store_sku
+  ALTER COLUMN net_revenue SET MASK retail.gov.mask_revenue;`},
+  aws:{
+   out:T("What a Thailand planner sees (Lake Formation data cells filter)", ["business_date|date","store_id|string","sku|string","units|long","currency|string","txn_count|long","is_promo|boolean"],
+    [["2026-10-09","TH-BKK-007","SKU-31045",21,"THB",21,false]], {flags:{0:["hl","row filter: TH stores; net_revenue column excluded"]}}),
+   why:"A Lake Formation data cells filter does both row and column filtering: excluded columns simply 'disappear' (they are not masked to null), so the structure of downstream reports differs by user. Also, model and endpoint permissions are not in Lake Formation but in IAM.",
+   code:{lang:"Python (boto3, Lake Formation)", text:`lf.create_data_cells_filter(TableData={
+    "TableCatalogId": ACCOUNT_ID, "DatabaseName": "gold",
+    "TableName": "daily_store_sku", "Name": "th_planners",
+    "RowFilter": {"FilterExpression": "store_id LIKE 'TH-%'"},
+    "ColumnWildcard": {"ExcludedColumnNames": ["net_revenue"]}})`}
+  }
+ },
+ "p:store":{
+  what:"In the end every table is Parquet files on S3 plus a transaction log.",
+  in:null,
+  out:X("retail.gold.daily_store_sku on S3 (Delta Lake)", `s3://retail-uc-managed/…/tables/8d1f…/
+  _delta_log/
+    00000000000000000040.checkpoint.parquet
+    00000000000000000041.json        ← commit: add 2 files, remove 1
+  part-00000-3a9c…-c000.snappy.parquet
+  part-00001-77e2…-c000.snappy.parquet`, []),
+  why:"Delta's _delta_log is a sequence of JSON commits (with a checkpoint every 10). Reading a table starts with the log, which tells you which Parquet files belong to which version, so you get time travel and ACID. The data stays in the customer's own S3.",
+  aws:{
+   out:X("gold.daily_store_sku in an S3 table bucket (Apache Iceberg)", `table bucket: retail-lake   (object layout managed by S3 Tables)
+  metadata/
+    00012-5be1….metadata.json        ← current snapshot pointer
+    snap-4471…-1-c2f0….avro           ← manifest list
+    c2f0…-m0.avro                     ← manifest: which data files
+  data/
+    00000-0-a91d….parquet
+    00001-0-0f3c….parquet`, []),
+   why:"Iceberg records versions in a tree: metadata.json → manifest list → manifest → Parquet, which also supports time travel. S3 Tables handles compaction and snapshot cleanup automatically. Both sides store Parquet on S3 underneath; the difference is the transaction log format."
+  }
+ },
+ "p:ws":{
+  what:"The nightly workflow: one DAG chains the pipeline, training, comparison, promotion and scoring.",
+  in:null,
+  out:T("Lakeflow Jobs: retail_nightly", ["task|STRING","type|STRING","depends_on|STRING","does|STRING"],
+    [["ingest","pipeline task","—","refresh bronze → silver → gold"],["features","pipeline task","ingest","refresh feature tables"],["train","notebook task","features","many-models training, logged to MLflow"],
+     ["gate","if/else condition","train","challenger wMAPE < champion?"],["promote","notebook task","gate = true","move alias @champion"],["score","notebook task","promote, or gate = false","write gold.dc_sku_forecast"],["dashboard","dashboard task","score","refresh the AI/BI dashboard"]]),
+  why:"A single Lakeflow Jobs DAG can hold pipelines, notebooks, conditional branches and dashboard refreshes; data and ML share one scheduler.",
+  aws:{
+   out:T("SageMaker Pipelines: retail-nightly (plus data jobs elsewhere)", ["step|string","type|string","depends_on|string","does|string"],
+    [["(before)","Glue workflow / Step Functions","—","bronze → silver → gold jobs"],["Features","ProcessingStep","data jobs","build the training set"],["Train","TrainingStep","Features","many-models script"],
+     ["Evaluate","ProcessingStep","Train","compute wMAPE"],["Gate","ConditionStep","Evaluate","challenger better?"],["Register","RegisterModel","Gate = true","PendingManualApproval"],["Score","TransformStep","Register","Batch Transform"]]),
+   why:"The ML part uses SageMaker Pipelines; the data part is usually Glue workflows, Step Functions or MWAA. The two schedulers have to trigger each other (for example through EventBridge). This is an integration cost to state clearly."
+  }
+ }
+};
+const STEP_ORDER = ["pos","ext","erp","stream","files","cdc","bronze","silver","gold","fs_off","rtc","fs_on","train","mlflow","registry","batch","inv","rt","sales","monitor","genai","p:gov","p:store","p:ws"];
+
+/* ---------- state ---------- */
+const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
+const state = {plat:"dbx", path:"all", sel:null, hover:null, orbit:false, switchT:-1e9, dstep:"pos"};
+const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+/* landscape: pipeline runs left to right; portrait (narrow panel): rotated so it runs top to bottom */
+const DEF_L = {yaw:-0.16, pitch:0.92}, DEF_P = {yaw:-Math.PI/2 + 0.12, pitch:0.98};
+let portrait = false;
+const getDef = () => portrait ? DEF_P : DEF_L;
+const cam = {yaw:DEF_L.yaw, pitch:DEF_L.pitch, zoom:1, baseYaw:DEF_L.yaw, idleSince:0};
+const DX = 138, DY = 190, PERSP = 2600;
+
+const canvas = document.getElementById("scene");
+const ctx = canvas.getContext("2d");
+let Wc = 0, Hc = 0, dpr = 1, fit = 1, ox = 0, oy = 0;
+let hits = [];
+
+const info = (n, plat) => Object.assign({}, n.both || {}, n[plat] || {});
+const nodeColor = (n, i) => i.o === "out" ? PATH[n.path].color : OWN[i.o].color;
+const other = p => p === "dbx" ? "aws" : "dbx";
+const platName = p => p === "dbx" ? "Databricks" : "AWS";
+
+/* ---------- math ---------- */
+const wpt = (s, l, z) => [(s - 4) * DX, l * DY, z];
+function proj(p, f, cx, cy, zoom){
+  f = f ?? fit; cx = cx ?? ox; cy = cy ?? oy; zoom = zoom ?? cam.zoom;
+  const c = Math.cos(cam.yaw), s = Math.sin(cam.yaw);
+  const x1 = p[0]*c - p[1]*s, y1 = p[0]*s + p[1]*c;
+  const cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
+  const up = y1*sp + p[2]*cp, depth = y1*cp - p[2]*sp;
+  const k = PERSP / (PERSP + depth);
+  const sc = k * f * zoom;
+  return {x: cx + x1*sc, y: cy - up*sc, d: depth, s: sc};
+}
+function computeFit(){
+  const y = cam.yaw, pi = cam.pitch, DEF = getDef();
+  cam.yaw = DEF.yaw; cam.pitch = DEF.pitch;
+  const pts = [];
+  // what is actually drawn: deck + stage headers, workspace frame above, storage floor below
+  for (const s of [-1.9, 8.7]) for (const l of [-2.0, 2.25]) pts.push(proj(wpt(s,l,0),1,0,0,1));
+  for (const s of [0.5, 7.5]) for (const l of [-1.45, 1.45]) pts.push(proj(wpt(s,l,150),1,0,0,1));
+  for (const s of [0.5, 8.5]) for (const l of [-1.65, 1.65]) pts.push(proj(wpt(s,l,-150),1,0,0,1));
+  cam.yaw = y; cam.pitch = pi;
+  const xs = pts.map(p=>p.x), ys = pts.map(p=>p.y);
+  const w = Math.max(...xs)-Math.min(...xs) + (portrait ? 40 : 120), h = (Math.max(...ys)-Math.min(...ys)) + 90; // room for labels
+  fit = Math.min(Wc*0.97/w, Hc*0.94/h);
+  ox = Wc/2 - ((Math.max(...xs)+Math.min(...xs))/2)*fit;
+  oy = Hc/2 - ((Math.max(...ys)+Math.min(...ys))/2)*fit + 16;
+}
+function resize(){
+  const r = canvas.parentElement.getBoundingClientRect();
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  Wc = r.width; Hc = r.height;
+  canvas.width = Math.round(Wc*dpr); canvas.height = Math.round(Hc*dpr);
+  const p = Wc < 760;
+  if (p !== portrait){ portrait = p; resetView(); }
+  canvas.parentElement.classList.toggle("portrait", portrait);
+  computeFit();
+}
+
+/* ---------- colour helpers ---------- */
+const rgb = h => { const n = parseInt(h.slice(1),16); return [(n>>16)&255,(n>>8)&255,n&255]; };
+const rgba = (h,a) => { const [r,g,b] = rgb(h); return `rgba(${r},${g},${b},${a})`; };
+const shade = (h,f) => { const [r,g,b] = rgb(h); return `rgb(${Math.round(r*f)},${Math.round(g*f)},${Math.round(b*f)})`; };
+const tint = (h,f) => { const [r,g,b] = rgb(h); return `rgb(${Math.round(r+(255-r)*f)},${Math.round(g+(255-g)*f)},${Math.round(b+(255-b)*f)})`; };
+
+/* ---------- drawing helpers ---------- */
+function polyPath(pts){ ctx.beginPath(); pts.forEach((p,i)=> i ? ctx.lineTo(p.x,p.y) : ctx.moveTo(p.x,p.y)); ctx.closePath(); }
+function rr(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function wrap(text, maxW){
+  const words = text.split(" "); const lines = []; let cur = "";
+  for (const w of words){ const t = cur ? cur + " " + w : w; if (ctx.measureText(t).width > maxW && cur){ lines.push(cur); cur = w; } else cur = t; }
+  if (cur) lines.push(cur); return lines;
+}
+function inPoly(x,y,pts){ let c=false; for(let i=0,j=pts.length-1;i<pts.length;j=i++){ const a=pts[i],b=pts[j]; if(((a.y>y)!==(b.y>y)) && (x < (b.x-a.x)*(y-a.y)/(b.y-a.y)+a.x)) c=!c; } return c; }
+
+/* ---------- activity ---------- */
+function edgeOn(e){ const p = state.path; if (p==="all" || e.p===p) return true; return (p==="sales"||p==="inv") && e.p==="core"; }
+function activeSet(){ if (state.path==="all") return null; const s = new Set(); EDGES.forEach(e => { if (edgeOn(e)){ s.add(e.a); s.add(e.b); } }); return s; }
+function selId(){ return state.sel && state.sel.kind==="node" ? state.sel.id : null; }
+
+/* ---------- scene ---------- */
+function planePts(pl, z){ return [wpt(pl.x0,pl.y0,z),wpt(pl.x1,pl.y0,z),wpt(pl.x1,pl.y1,z),wpt(pl.x0,pl.y1,z)].map(p=>proj(p)); }
+function drawPlane(pl){
+  const pts = planePts(pl, pl.z);
+  let fill, stroke, dash = pl.dash || [];
+  if (pl.kind==="gov"){ const c = state.plat==="dbx" ? OWN.dbx.color : OWN.aws.color; fill = rgba(c, state.plat==="dbx"?0.11:0.075); stroke = rgba(state.plat==="dbx"?c:"#B86E00", 0.75); }
+  else if (pl.kind==="store"){ fill = "rgba(91,104,117,0.10)"; stroke = "rgba(91,104,117,0.5)"; }
+  else { fill = "rgba(22,33,44,0.035)"; stroke = "rgba(22,33,44,0.45)"; dash = [6,5]; }
+  const selected = state.sel && state.sel.kind==="plane" && state.sel.group===pl.group;
+  polyPath(pts); ctx.fillStyle = fill; ctx.fill();
+  ctx.setLineDash(dash); ctx.lineWidth = selected ? 2.4 : 1.3; ctx.strokeStyle = selected ? "#16212C" : stroke; ctx.stroke(); ctx.setLineDash([]);
+}
+function planeLabel(pl){
+  const z = pl.z;
+  const anchor = pl.kind==="ws" ? proj(wpt(pl.x0+0.08, pl.y1, z)) : proj(wpt(pl.lx, pl.y0, z));
+  const fs = Math.max(11, Math.min(14, 13*anchor.s/0.75));
+  ctx.font = `700 ${fs}px ${COND}`;
+  const w = ctx.measureText(pl.t).width + 16, h = fs + 10;
+  const x = (portrait && pl.kind==="ws") ? anchor.x - w : anchor.x, y = pl.kind==="ws" ? anchor.y - h - 4 : anchor.y + 4;
+  rr(x, y, w, h, 4);
+  if (pl.kind==="gov"){ ctx.fillStyle = state.plat==="dbx" ? "#C9260F" : "#232F3E"; }
+  else if (pl.kind==="store"){ ctx.fillStyle = "#5B6875"; }
+  else { ctx.fillStyle = "rgba(255,255,255,0.95)"; }
+  ctx.fill();
+  if (pl.kind==="ws"){ ctx.strokeStyle = "rgba(22,33,44,0.5)"; ctx.lineWidth = 1; ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]); }
+  if (pl.kind==="gov" && state.plat==="aws"){ ctx.fillStyle = "#FF9900"; ctx.fillRect(x, y+h-3, w, 3); }
+  ctx.fillStyle = pl.kind==="ws" ? "#16212C" : "#FFFFFF";
+  ctx.textBaseline = "middle"; ctx.textAlign = "left";
+  ctx.fillText(pl.t, x+8, y+h/2+0.5);
+  hits.push({kind:"plane", group:pl.group, rect:[x,y,w,h]});
+}
+
+function edgeGeom(e, drop){
+  const A = byId[e.a], B = byId[e.b];
+  const pa = wpt(A.s, A.l, A.h + drop), pb = wpt(B.s, B.l, B.h + drop);
+  const dist = Math.hypot(pa[0]-pb[0], pa[1]-pb[1]);
+  const lift = e.lift ?? (34 + dist*0.16);
+  const c = [(pa[0]+pb[0])/2, (pa[1]+pb[1])/2, Math.max(pa[2],pb[2]) + lift];
+  const N = 22, pts = [];
+  for (let i=0;i<=N;i++){ const t=i/N, u=1-t; pts.push(proj([u*u*pa[0]+2*u*t*c[0]+t*t*pb[0], u*u*pa[1]+2*u*t*c[1]+t*t*pb[1], u*u*pa[2]+2*u*t*c[2]+t*t*pb[2]])); }
+  return {pts, len: dist};
+}
+function pointAt(pts, u){ const f = u*(pts.length-1); const i = Math.min(pts.length-2, Math.floor(f)); const r = f - i; return {x: pts[i].x+(pts[i+1].x-pts[i].x)*r, y: pts[i].y+(pts[i+1].y-pts[i].y)*r, s: pts[i].s}; }
+
+function drawBox(n, i, drop, alpha, isSel, isHover){
+  const hw = portrait ? 38 : 52, hd = portrait ? 50 : 34, h = n.h;
+  const [cx, cy] = wpt(n.s, n.l, 0);
+  const z0 = drop, z1 = drop + h;
+  const c = [[cx-hw,cy-hd],[cx+hw,cy-hd],[cx+hw,cy+hd],[cx-hw,cy+hd]];
+  const bot = c.map(p=>proj([p[0],p[1],z0])), top = c.map(p=>proj([p[0],p[1],z1]));
+  const col = nodeColor(n, i);
+  const faces = [
+    {p:[bot[0],bot[1],top[1],top[0]], f:0.80},
+    {p:[bot[1],bot[2],top[2],top[1]], f:0.66},
+    {p:[bot[2],bot[3],top[3],top[2]], f:0.80},
+    {p:[bot[3],bot[0],top[0],top[3]], f:0.66}
+  ].map(fc => Object.assign(fc, {d: fc.p.reduce((a,q)=>a+q.d,0)/4})).sort((a,b)=>b.d-a.d);
+  ctx.globalAlpha = alpha;
+  for (const fc of faces){ polyPath(fc.p); ctx.fillStyle = shade(col, fc.f); ctx.fill(); }
+  polyPath(top); ctx.fillStyle = tint(col, 0.12); ctx.fill();
+  ctx.lineWidth = isSel ? 2.6 : (isHover ? 1.8 : 0.8);
+  ctx.strokeStyle = isSel || isHover ? "#16212C" : "rgba(22,33,44,0.35)";
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  hits.push({kind:"node", id:n.id, poly: top.concat([bot[2],bot[1],bot[0],bot[3]])});
+  return proj([cx, cy, z1]);
+}
+
+function drawLabel(n, i, anchor, alpha, showSub){
+  const sc = Math.max(0.86, Math.min(1.3, anchor.s/0.62));
+  const fsT = 12.2*sc, fsS = 10.8*sc, pad = 5*sc, maxT = 94*sc, maxS = 150*sc;
+  ctx.font = `700 ${fsT}px ${COND}`;
+  const tl = wrap(i.t, maxT).slice(0,4);
+  let w = Math.max(...tl.map(t=>ctx.measureText(t).width));
+  let sl = [];
+  if (showSub){ ctx.font = `500 ${fsS}px ${SANS}`; sl = wrap(i.k, maxS).slice(0,3); w = Math.max(w, ...sl.map(t=>ctx.measureText(t).width)); }
+  const hT = tl.length*fsT*1.12, hS = sl.length ? 4*sc + sl.length*fsS*1.3 : 0;
+  const bw = w + pad*2 + 4*sc, bh = hT + hS + pad*2;
+  const x = anchor.x - bw/2, y = anchor.y - 12*sc - bh;
+  ctx.globalAlpha = alpha;
+  rr(x, y, bw, bh, 4*sc); ctx.fillStyle = "rgba(255,255,255,0.95)"; ctx.fill();
+  ctx.strokeStyle = "rgba(22,33,44,0.22)"; ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = nodeColor(n, i); ctx.fillRect(x, y+3*sc, 3.5*sc, bh-6*sc);
+  ctx.beginPath(); ctx.moveTo(anchor.x-5*sc, y+bh); ctx.lineTo(anchor.x+5*sc, y+bh); ctx.lineTo(anchor.x, y+bh+6*sc); ctx.closePath(); ctx.fillStyle = "rgba(255,255,255,0.95)"; ctx.fill();
+  ctx.fillStyle = "#16212C"; ctx.textAlign = "left"; ctx.textBaseline = "top";
+  ctx.font = `700 ${fsT}px ${COND}`;
+  tl.forEach((t,k)=> ctx.fillText(t, x+pad+4*sc, y+pad+k*fsT*1.12));
+  if (sl.length){ ctx.font = `500 ${fsS}px ${SANS}`; ctx.fillStyle = "#44515D"; sl.forEach((t,k)=> ctx.fillText(t, x+pad+4*sc, y+pad+hT+4*sc+k*fsS*1.3)); }
+  ctx.globalAlpha = 1;
+  hits.push({kind:"node", id:n.id, rect:[x,y,bw,bh]});
+}
+
+function drawText(t, p, opts){
+  const o = Object.assign({size:12, weight:600, color:"#56636F", align:"center", font:SANS, halo:true}, opts||{});
+  ctx.font = `${o.weight} ${o.size}px ${o.font}`; ctx.textAlign = o.align; ctx.textBaseline = "middle";
+  if (o.halo){ ctx.lineWidth = 4; ctx.strokeStyle = "rgba(244,247,249,0.9)"; ctx.strokeText(t, p.x, p.y); }
+  ctx.fillStyle = o.color; ctx.fillText(t, p.x, p.y);
+}
+
+/* ---------- frame ---------- */
+let last = performance.now();
+function frame(now){
+  const dt = Math.min(0.05, (now-last)/1000); last = now;
+  if (state.orbit && !reduce){ cam.yaw = cam.baseYaw + 0.32*Math.sin(now/1000*0.22); }
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,Wc,Hc);
+  hits = [];
+  const plat = state.plat;
+  const planes = PLANES[plat];
+  const act = activeSet();
+  const sid = selId();
+  const st = reduce ? 1 : Math.min(1, (now - state.switchT)/520);
+  const ease = 1 - Math.pow(1-st, 3);
+  const drop = (1-ease)*70;
+  const fade = 0.15 + 0.85*ease;
+
+  // lower planes: storage then governance (lowest first)
+  planes.filter(p=>p.kind!=="ws").sort((a,b)=>a.z-b.z).forEach(drawPlane);
+
+  // pillars: platform-owned nodes down to the lowest governance slab
+  const govZ = Math.min(...planes.filter(p=>p.kind==="gov").map(p=>p.z));
+  const govCol = plat==="dbx" ? OWN.dbx.color : "#B86E00";
+  ctx.setLineDash([3,4]); ctx.lineWidth = 1;
+  NODES.forEach(n => { const i = info(n, plat); if (i.o !== plat) return;
+    const a = proj(wpt(n.s,n.l,0)), b = proj(wpt(n.s,n.l,govZ));
+    ctx.strokeStyle = rgba(govCol, act && !act.has(n.id) ? 0.12 : 0.45);
+    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); });
+  ctx.setLineDash([]);
+
+  // deck
+  const deck = {x0:-1.35,x1:8.65,y0:-1.75,y1:1.75};
+  polyPath(planePts(deck, 0)); ctx.fillStyle = "rgba(255,255,255,0.52)"; ctx.fill(); ctx.strokeStyle = "rgba(22,33,44,0.28)"; ctx.lineWidth = 1.2; ctx.stroke();
+  polyPath(planePts({x0:-1.35,x1:8.65,y0:-1.55,y1:-0.5},0)); ctx.fillStyle = rgba(PATH.sales.color,0.06); ctx.fill();
+  polyPath(planePts({x0:-1.35,x1:8.65,y0:0.5,y1:1.55},0)); ctx.fillStyle = rgba(PATH.inv.color,0.06); ctx.fill();
+  // stage tick lines on deck
+  ctx.strokeStyle = "rgba(22,33,44,0.07)"; ctx.lineWidth = 1;
+  for (let s=0.5; s<8.6; s+=1){ const a=proj(wpt(s,-1.75,0)), b=proj(wpt(s,1.75,0)); ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
+  // lane labels
+  const laneAt = portrait ? -1.55 : -0.62, laneAlign = portrait ? "center" : "right";
+  drawText("Store sales", proj(wpt(laneAt,-1,0)), {align:laneAlign, color:PATH.sales.color, size:12.5, weight:700, font:COND});
+  drawText("Shared", proj(wpt(laneAt,0,0)), {align:laneAlign, color:"#475569", size:12.5, weight:700, font:COND});
+  drawText(portrait ? "Warehouse" : "Warehouse inventory", proj(wpt(laneAt,1,0)), {align:laneAlign, color:PATH.inv.color, size:12.5, weight:700, font:COND});
+
+  // edges
+  const tsec = now/1000;
+  const geoms = EDGES.map(e => Object.assign({e}, edgeGeom(e, drop)));
+  for (const g of geoms){
+    const e = g.e, on = edgeOn(e);
+    const touch = sid && (e.a===sid || e.b===sid);
+    const color = state.path==="all" ? PATH[e.p].color : (on ? PATH[state.path==="sales"||state.path==="inv" ? (e.p==="core"?state.path:e.p) : e.p].color : "#94A3B8");
+    ctx.globalAlpha = (on ? (state.path==="all" ? 0.62 : 0.95) : 0.10) * fade;
+    if (touch) ctx.globalAlpha = 1;
+    ctx.strokeStyle = color; ctx.lineWidth = (touch ? 3.4 : 2.2) * Math.max(0.7, g.pts[0].s);
+    ctx.setLineDash(e.dash ? [7,6] : []);
+    ctx.beginPath(); g.pts.forEach((p,k)=> k ? ctx.lineTo(p.x,p.y) : ctx.moveTo(p.x,p.y)); ctx.stroke(); ctx.setLineDash([]);
+    // arrowhead
+    const p1 = g.pts[g.pts.length-3], p2 = g.pts[g.pts.length-1];
+    const ang = Math.atan2(p2.y-p1.y, p2.x-p1.x), L = 8*Math.max(0.7,p2.s);
+    ctx.beginPath(); ctx.moveTo(p2.x,p2.y); ctx.lineTo(p2.x-L*Math.cos(ang-0.42), p2.y-L*Math.sin(ang-0.42)); ctx.lineTo(p2.x-L*Math.cos(ang+0.42), p2.y-L*Math.sin(ang+0.42)); ctx.closePath(); ctx.fillStyle = color; ctx.fill();
+    // particles
+    if (!reduce && on){
+      const period = 1.4 + g.len/260;
+      for (let k=0;k<2;k++){
+        const u = ((tsec/period) + k/2 + (e.a.length*0.13)) % 1;
+        const q = pointAt(g.pts, u);
+        ctx.beginPath(); ctx.arc(q.x, q.y, 3.4*Math.max(0.7,q.s), 0, Math.PI*2); ctx.fillStyle = color; ctx.globalAlpha = (state.path==="all"?0.9:1)*fade; ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // boxes, far to near
+  const order = NODES.map(n => ({n, d: proj(wpt(n.s,n.l,0)).d})).sort((a,b)=>b.d-a.d);
+  const anchors = {};
+  for (const {n} of order){
+    const i = info(n, plat);
+    const dim = act && !act.has(n.id);
+    anchors[n.id] = drawBox(n, i, drop, (dim ? 0.2 : 1)*fade, n.id===sid, n.id===state.hover);
+  }
+  // labels, far to near
+  for (const {n} of order){
+    const i = info(n, plat);
+    const dim = act && !act.has(n.id);
+    const show = n.always || n.id===sid || n.id===state.hover;
+    drawLabel(n, i, anchors[n.id], (dim ? 0.28 : 1)*fade, show);
+  }
+  // stage headers along the back edge, drawn over everything on the deck
+  if (portrait){
+    STAGES.forEach((t,k)=>{ const p = proj(wpt(k, -1.95, 0)); ctx.beginPath(); ctx.arc(p.x, p.y, 9, 0, Math.PI*2); ctx.fillStyle = "#16212C"; ctx.fill();
+      drawText(String(k+1), p, {size:11.5, weight:700, color:"#FFFFFF", font:COND, halo:false}); });
+  } else {
+    STAGES.forEach((t,k)=> drawText(`${k+1}  ${t}`, proj(wpt(k, 2.08, 0)), {size:12.5, weight:700, color:"#2F3B47", font:COND}));
+  }
+  // workspace frame above, then all plane labels
+  planes.filter(p=>p.kind==="ws").forEach(drawPlane);
+  if (!portrait) planes.forEach(planeLabel);   // portrait: layer names live in the HTML bar instead
+
+  requestAnimationFrame(frame);
+}
+
+/* ---------- interaction ---------- */
+let drag = null;
+function pick(x, y){
+  for (let k = hits.length-1; k >= 0; k--){
+    const h = hits[k];
+    if (h.rect){ const [rx,ry,rw,rh] = h.rect; if (x>=rx && x<=rx+rw && y>=ry && y<=ry+rh) return h; }
+    else if (h.poly && inPoly(x,y,h.poly)) return h;
+  }
+  return null;
+}
+function localXY(ev){ const r = canvas.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; }
+canvas.addEventListener("pointerdown", ev => { canvas.setPointerCapture(ev.pointerId); const [x,y] = localXY(ev); drag = {x, y, sx:x, sy:y, moved:false}; });
+canvas.addEventListener("pointermove", ev => {
+  const [x,y] = localXY(ev);
+  if (drag){
+    const dx = x-drag.x, dy = y-drag.y; drag.x = x; drag.y = y;
+    if (Math.abs(x-drag.sx)+Math.abs(y-drag.sy) > 4){ drag.moved = true; canvas.classList.add("dragging"); }
+    if (drag.moved){ cam.yaw += dx*0.0065; cam.pitch = Math.max(0.22, Math.min(1.35, cam.pitch + dy*0.0045)); cam.baseYaw = cam.yaw; }
+  } else {
+    const h = pick(x,y); const id = h && h.kind==="node" ? h.id : null;
+    state.hover = id; canvas.classList.toggle("pointing", !!h);
+  }
+});
+canvas.addEventListener("pointerup", ev => {
+  const [x,y] = localXY(ev);
+  if (drag && !drag.moved){
+    const h = pick(x,y);
+    if (h && h.kind==="node") select({kind:"node", id:h.id});
+    else if (h && h.kind==="plane") select({kind:"plane", group:h.group});
+    else select(null);
+  }
+  drag = null; canvas.classList.remove("dragging");
+});
+canvas.addEventListener("pointerleave", () => { if (!drag){ state.hover = null; canvas.classList.remove("pointing"); } });
+canvas.addEventListener("wheel", ev => { ev.preventDefault(); cam.zoom = Math.max(0.6, Math.min(2.4, cam.zoom*Math.exp(-ev.deltaY*0.0012))); }, {passive:false});
+canvas.addEventListener("dblclick", resetView);
+canvas.addEventListener("keydown", ev => {
+  const k = ev.key; let used = true;
+  if (k==="ArrowLeft") cam.yaw -= 0.08; else if (k==="ArrowRight") cam.yaw += 0.08;
+  else if (k==="ArrowUp") cam.pitch = Math.min(1.35, cam.pitch+0.06); else if (k==="ArrowDown") cam.pitch = Math.max(0.22, cam.pitch-0.06);
+  else if (k==="+"||k==="=") cam.zoom = Math.min(2.4, cam.zoom*1.1); else if (k==="-") cam.zoom = Math.max(0.6, cam.zoom/1.1);
+  else if (k==="Escape") select(null); else used = false;
+  if (used){ ev.preventDefault(); cam.baseYaw = cam.yaw; }
+});
+function resetView(){ const d = getDef(); cam.yaw = d.yaw; cam.pitch = d.pitch; cam.zoom = 1; cam.baseYaw = d.yaw; }
+document.getElementById("resetView").addEventListener("click", resetView);
+const orbitBtn = document.getElementById("orbit");
+if (reduce) orbitBtn.hidden = true;
+orbitBtn.addEventListener("click", () => { state.orbit = !state.orbit; orbitBtn.setAttribute("aria-pressed", String(state.orbit)); if (!state.orbit) cam.baseYaw = cam.yaw; });
+
+document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => setPlat(b.dataset.plat)));
+document.querySelectorAll(".paths button").forEach(b => b.addEventListener("click", () => {
+  state.path = b.dataset.path;
+  document.querySelectorAll(".paths button").forEach(x => x.setAttribute("aria-pressed", String(x===b)));
+}));
+function setPlat(p){
+  if (p===state.plat) return;
+  state.plat = p; state.switchT = performance.now();
+  document.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.plat===p)));
+  const badge = document.getElementById("platbadge");
+  badge.textContent = p==="dbx" ? "Databricks solution" : "AWS solution";
+  badge.classList.toggle("aws", p==="aws");
+  renderPanel(); renderLayers(); fillStepSelect(); renderInspector();
+}
+function renderLayers(){
+  const el = document.getElementById("layers");
+  const order = {ws:0, gov:1, store:2};
+  el.innerHTML = PLANES[state.plat].slice().sort((a,b)=>order[a.kind]-order[b.kind])
+    .map(pl => `<button type="button" class="${pl.kind} ${state.plat}" data-group="${pl.group}">${pl.t}</button>`).join("");
+  el.querySelectorAll("button").forEach(b => b.addEventListener("click", () => select({kind:"plane", group:b.dataset.group})));
+}
+function select(sel){
+  state.sel = sel;
+  if (sel) state.dstep = sel.kind === "node" ? sel.id : "p:" + sel.group;
+  renderPanel(); renderInspector();
+}
+
+/* ---------- panel ---------- */
+const chip = (o, n) => o==="out" ? `<span class="chip" style="background:${PATH[n.path].color}">${OWN.out.label}</span>` : `<span class="chip ${o}">${OWN[o].label}</span>`;
+const doc = url => url ? `<a class="doc" href="${url}" target="_blank" rel="noopener">Official doc</a>` : `<span class="nodoc">Customer system, no vendor doc</span>`;
+const panel = document.getElementById("panel");
+function pathsOf(id){ const s = new Set(); EDGES.forEach(e => { if (e.a===id || e.b===id) s.add(e.p); }); return [...s].map(p=>PATH[p].label).join(", "); }
+function renderPanel(){
+  const p = state.plat, q = other(p);
+  if (!state.sel){
+    panel.innerHTML = `
+      <h2>How to read it</h2>
+      <p>Each box is one step of the same pipeline. Switch between Databricks and AWS above: the boxes stay where they are and the components change, so you can compare one step at a time.</p>
+      <p>The colour of a box shows who provides it. The floors under the deck are governance and storage, and the dashed frame above is where people work and how jobs are orchestrated.</p>
+      <h3>The key difference</h3>
+      <p><b>Databricks:</b> one platform runs ingest, pipelines, features, training, serving and monitoring, and one catalog governs all of it, down to models, endpoints and agent tools.</p>
+      <p><b>AWS:</b> you compose purpose-built services. Governance spans SageMaker Catalog, Lake Formation with the Glue Data Catalog, and IAM, and Feature Store and Canvas are used from SageMaker AI Studio rather than Unified Studio.</p>
+      <div class="note"><h3>Learning by comparison</h3><p>If you know AWS better, walk through the AWS view first, then switch back to Databricks and see what each cell becomes. Watch for three things: most orange cells turn red (absorbed into one platform), governance goes from three layers to one, and Kafka and S3 appear on both sides (where they coexist).</p></div>`;
+    return;
+  }
+  if (state.sel.kind==="node"){
+    const n = byId[state.sel.id], a = info(n,p), b = info(n,q);
+    panel.innerHTML = `
+      <p class="step">Step ${n.s+1} of 9: ${STAGES[n.s]}</p>
+      <h2>${a.t}</h2>
+      <p>${chip(a.o,n)}</p>
+      <p>${a.d}</p>
+      ${doc(a.doc)}
+      <div class="other">
+        <h3>Same step on ${platName(q)}</h3>
+        <p class="oname">${b.t} ${chip(b.o,n)}</p>
+        <p>${b.d}</p>
+        ${doc(b.doc)}
+      </div>
+      ${n.n ? `<div class="note"><h3>Key points</h3><p>${n.n}</p></div>` : ""}
+      <p><a class="doc" href="#data">See the data before and after this step</a></p>
+      <p class="pathlist">Flows through here: ${pathsOf(n.id)}</p>
+      <button type="button" class="back">Back to overview</button>`;
+  } else {
+    const g = state.sel.group;
+    const tiles = (pl) => PLANES[pl].filter(x=>x.group===g).map(x=>`<div class="tile"><b>${x.t}</b>${x.d}<br>${doc(x.doc)}</div>`).join("");
+    panel.innerHTML = `
+      <p class="step">Layer</p>
+      <h2>${GROUP_NAME[g]}</h2>
+      <h3>On ${platName(p)}</h3>${tiles(p)}
+      <h3>On ${platName(q)}</h3>${tiles(q)}
+      <div class="note"><h3>Key points</h3><p>${GROUP_NOTE[g]}</p></div>
+      <button type="button" class="back">Back to overview</button>`;
+  }
+  const back = panel.querySelector(".back"); if (back) back.addEventListener("click", () => select(null));
+}
+
+/* ---------- comparison table ---------- */
+function buildTable(){
+  const tb = document.querySelector("#cmpTable tbody");
+  const cell = (n, pl) => { const i = info(n, pl); return `<span class="nm">${i.t}</span>${chip(i.o,n)}<span class="ds">${i.d}</span>${i.doc ? `<a href="${i.doc}" target="_blank" rel="noopener">Official doc</a>` : ""}`; };
+  const rows = [];
+  const sorted = NODES.slice().sort((a,b)=> a.s-b.s || a.l-b.l);
+  let lastS = -1;
+  for (const n of sorted){
+    rows.push(`<tr><td>${n.s!==lastS ? `<b>${n.s+1}. ${STAGES[n.s]}</b>` : ""}</td><td>${cell(n,"dbx")}</td><td>${cell(n,"aws")}</td><td>${n.n||""}</td></tr>`);
+    lastS = n.s;
+  }
+  rows.push(`<tr class="grouprow"><td colspan="4">Layers under and over every step</td></tr>`);
+  for (const g of ["ws","gov","store"]){
+    const t = pl => PLANES[pl].filter(x=>x.group===g).map(x=>`<span class="nm">${x.t}</span><span class="ds">${x.d}</span>${x.doc?`<a href="${x.doc}" target="_blank" rel="noopener">Official doc</a>`:""}`).join("<br>");
+    rows.push(`<tr><td><b>${GROUP_NAME[g]}</b></td><td>${t("dbx")}</td><td>${t("aws")}</td><td>${GROUP_NOTE[g]}</td></tr>`);
+  }
+  tb.innerHTML = rows.join("");
+}
+function buildSources(){
+  const opened = [
+    ["Databricks: Lakeflow pipelines (Spark Declarative Pipelines)", D.ldp],["Databricks: Lakeflow Connect", D.lfconnect],["Databricks: Auto Loader", D.autoloader],
+    ["Databricks: Feature Store", D.fs],["Databricks: Lakebase Postgres", D.lakebase],["Databricks: MLflow", D.mlflow],["Databricks: Models in Unity Catalog", D.ucmodels],
+    ["Databricks: pandas function APIs", D.pandas],["Databricks: Model Serving", D.serving],["Databricks: Lakeflow Jobs", D.jobs],["Databricks: Data quality monitoring", D.dqm],
+    ["Databricks: Databricks Apps", D.apps],["Databricks: AI/BI dashboards", D.dash],["Databricks: Agent Bricks", D.agents],["Databricks: Unity Gateway", D.ugw],
+    ["Databricks: AI Search (formerly Vector Search)", D.aisearch],["Databricks: Genie One MCP server", D.genie],
+    ["AWS: Next-generation Amazon SageMaker overview", D.nextgen],["AWS: SageMaker Unified Studio", D.smus],["AWS: S3 Tables", D.s3t],["AWS: Managed MLflow on SageMaker AI", D.smmlflow],
+    ["Databricks: Auto Loader schema inference and _rescued_data", D.alSchema],["Databricks: AUTO CDC (SCD type 2)", D.ldpCdc],["Databricks: pipelines Python reference (pyspark.pipelines)", D.ldpPy],
+    ["Databricks: Unity Gateway inference tables", D.infTables],["Databricks: inference tables for serving endpoints (legacy schema)", D.infTablesLegacy],
+    ["Databricks: Data profiling", D.profiling],["Databricks: Data profiling metric tables", D.profOut],["Databricks: Query serving endpoints (dataframe_records)", D.scoreEp],
+    ["AWS: SageMaker Canvas time-series forecasts", D.canvasTs],["AWS: Amazon Forecast (closed to new customers)", D.forecast],["AWS: Amazon Bedrock AgentCore", D.agentcore],["AWS: Amazon Quick", D.quick],
+    ["AWS: Model Monitor availability change (closed to new customers)", D.mmAvail],["AWS: Data Capture", D.dataCapture],["AWS: Feature Store concepts", D.fsConcepts],["AWS: Feature Store offline store format", D.fsOffline]
+  ];
+  document.getElementById("srcList").innerHTML = opened.map(([t,u])=>`<li><a href="${u}" target="_blank" rel="noopener">${t}</a></li>`).join("");
+}
+
+/* ---------- data inspector ---------- */
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const FLAG = {ok:"ok", dup:"duplicate", bad:"fails check", late:"late", evo:"schema change", chg:"changed", hl:"look here", drift:"alert", closed:"superseded"};
+const TAG = {pk:"PK", ts:"TS key", sys:"system", rid:"record id", et:"event time", part:"partition", new:"new"};
+const iceType = t => t.replace(/\bSTRING\b/g,"string").replace(/\bBIGINT\b/g,"long").replace(/\bINT\b/g,"int").replace(/\bDOUBLE\b/g,"double")
+  .replace(/\bBOOLEAN\b/g,"boolean").replace(/\bDATE\b/g,"date").replace(/\bTIMESTAMP\b/g,"timestamptz").replace(/\bDECIMAL\b/g,"decimal")
+  .replace(/\bARRAY</g,"list<").replace(/\bMAP</g,"map<").replace(/\bSTRUCT</g,"struct<").replace(/\bBINARY\b/g,"binary");
+function toAws(t){
+  if (!t || !t.lake) return t;
+  return Object.assign({}, t, {lake:false,
+    name: t.name.replace(/^retail\.([a-z_]+)\.([a-z_]+)/, "s3tablescatalog/retail-lake.$1.$2").replace("(streaming table)","(Iceberg)").replace("(materialized view)","(Iceberg, refreshed by a scheduled job)"),
+    cols: t.cols.map(c => [c[0], iceType(c[1]), c[2], c[3]])});
+}
+function dataFor(id, plat){
+  const d = DATA[id]; if (!d) return null;
+  const o = d[plat] || {};
+  const pick = k => (o[k] !== undefined ? o[k] : d[k]);
+  const r = {what: pick("what"), in: pick("in"), out: pick("out"), extra: pick("extra") || [], why: pick("why"), code: pick("code")};
+  if (plat === "aws"){ r.in = toAws(r.in); r.out = toAws(r.out); r.extra = r.extra.map(toAws); }
+  return r;
+}
+function diffCols(a, b){
+  if (!a || !b || !a.cols || !b.cols || !a.cols.length || !b.cols.length) return null;
+  const A = new Map(a.cols.map(c => [c[0], c[1]])), B = new Map(b.cols.map(c => [c[0], c[1]]));
+  return {
+    added: b.cols.filter(c => !A.has(c[0])).map(c => c[0]),
+    removed: a.cols.filter(c => !B.has(c[0])).map(c => c[0]),
+    changed: b.cols.filter(c => A.has(c[0]) && A.get(c[0]).toLowerCase() !== c[1].toLowerCase()).map(c => [c[0], A.get(c[0]), c[1]])
+  };
+}
+function cellHtml(v){
+  if (v === null || v === undefined) return '<span class="nul">null</span>';
+  if (typeof v === "boolean") return `<span class="bool">${v}</span>`;
+  const s = typeof v === "object" ? JSON.stringify(v) : String(v);
+  return s.length > 46 ? `<span title="${esc(s)}">${esc(s.slice(0,44))}…</span>` : esc(s);
+}
+function colClass(c, diff, side){
+  const cls = [];
+  if (c[2] === "sys") cls.push("c-sys");
+  if (diff){
+    if (side === "out" && diff.added.includes(c[0])) cls.push("c-add");
+    if (side === "out" && diff.changed.some(x => x[0] === c[0])) cls.push("c-chg");
+    if (side === "in" && diff.removed.includes(c[0])) cls.push("c-del");
+  }
+  return cls.join(" ");
+}
+function schemaHtml(obj, diff, side){
+  if (!obj.cols || !obj.cols.length) return "";
+  const li = obj.cols.map(c => {
+    let m = "", mc = "";
+    if (diff && side === "out" && diff.added.includes(c[0])){ m = "+"; mc = "add"; }
+    else if (diff && side === "out"){ const ch = diff.changed.find(x => x[0] === c[0]); if (ch){ m = "~"; mc = "chg"; } }
+    else if (diff && side === "in" && diff.removed.includes(c[0])){ m = "−"; mc = "del"; }
+    const ch = diff && side === "out" ? diff.changed.find(x => x[0] === c[0]) : null;
+    const type = ch ? `${esc(ch[1])} → ${esc(c[1])}` : esc(c[1]);
+    return `<li><span class="m ${mc}">${m}</span><span class="sn">${esc(c[0])}${c[2] && TAG[c[2]] ? ` <span class="tg tg-${c[2]}">${TAG[c[2]]}</span>` : ""}</span><span class="st">${type}</span>${c[3] ? `<span class="nt">${esc(c[3])}</span>` : ""}</li>`;
+  }).join("");
+  return `<details class="schema" open><summary>Schema (${obj.cols.length} ${obj.cols.length===1?"field":"fields"})</summary><ul class="sch">${li}</ul></details>`;
+}
+function tableHtml(t, diff, side){
+  const flags = t.flags || {};
+  const hasFlags = Object.keys(flags).length > 0;
+  const head = t.cols.map(c => `<th class="${colClass(c, diff, side)}" title="${esc(c[3]||"")}"><span class="cn">${esc(c[0])}${c[2] && TAG[c[2]] ? ` <span class="tg tg-${c[2]}">${TAG[c[2]]}</span>` : ""}</span><span class="ty">${esc(c[1])}</span></th>`).join("");
+  const body = t.rows.map((r, i) => {
+    const f = flags[i];
+    return `<tr class="${f ? "f-" + f[0] : ""}">${hasFlags ? `<td class="fn">${f ? `<span class="fl ${f[0]}">${FLAG[f[0]]}</span>${esc(f[1])}` : ""}</td>` : ""}${r.map(v => `<td>${cellHtml(v)}</td>`).join("")}</tr>`;
+  }).join("");
+  return `<div class="dt-name">${esc(t.name)}</div><div class="scroll"><table class="dt"><thead><tr>${hasFlags ? "<th class=\"fnh\"><span class=\"cn\">why this row</span><span class=\"ty\">&nbsp;</span></th>" : ""}${head}</tr></thead><tbody>${body}</tbody></table></div>${t.foot ? `<p class="dt-foot">${esc(t.foot)}</p>` : ""}`;
+}
+function jsonHl(obj){ return esc(JSON.stringify(obj, null, 2)).replace(/&quot;([^&]*?)&quot;:/g, '<span class="k">"$1"</span>:'); }
+function blockHtml(obj, diff, side){
+  if (!obj) return side === "in"
+    ? `<p class="muted">This is where the data starts: a customer system outside the platform.</p>`
+    : `<p class="muted">No data output at this step.</p>`;
+  let h = "";
+  if (obj.kind === "table") h = tableHtml(obj, diff, side);
+  else if (obj.kind === "json") h = `<div class="dt-name">${esc(obj.name)}</div>` + obj.items.map(it => `<div class="js-item">${it.label ? `<div class="js-lab">${it.flag ? `<span class="fl ${it.flag}">${FLAG[it.flag]}</span>` : ""}${esc(it.label)}</div>` : ""}<pre class="json">${jsonHl(it.obj)}</pre></div>`).join("");
+  else h = `<div class="dt-name">${esc(obj.name)}</div><pre class="txt">${esc(obj.text)}</pre>`;
+  return h + schemaHtml(obj, diff, side);
+}
+function stepLabel(id){
+  if (id.startsWith("p:")) return "Layer: " + GROUP_NAME[id.slice(2)];
+  const n = byId[id]; return `${n.s+1}. ${STAGES[n.s]}: ${info(n, state.plat).t}`;
+}
+const dStep = document.getElementById("dStep"), dBody = document.getElementById("dBody");
+function fillStepSelect(){
+  dStep.innerHTML = STEP_ORDER.map(id => `<option value="${id}">${esc(stepLabel(id))}</option>`).join("");
+  dStep.value = state.dstep;
+}
+function renderInspector(){
+  const id = state.dstep, plat = state.plat, d = dataFor(id, plat);
+  if (state.booted && history.replaceState && /(^|&)(step|plat)=/.test(location.hash.slice(1) || "step=")) history.replaceState(null, "", `#step=${id}&plat=${plat}`);
+  if (dStep.value !== id) dStep.value = id;
+  if (!d){ dBody.innerHTML = `<p class="muted">No sample data for this step.</p>`; return; }
+  const diff = diffCols(d.in, d.out);
+  const pn = platName(plat);
+  const k = STEP_ORDER.indexOf(id);
+  let dl = "";
+  if (diff){
+    const parts = [];
+    if (diff.added.length) parts.push(`<span class="add">+ ${diff.added.length} added</span> (${diff.added.map(esc).join(", ")})`);
+    if (diff.changed.length) parts.push(`<span class="chg">~ ${diff.changed.length} changed type</span> (${diff.changed.map(x => `${esc(x[0])}: ${esc(x[1])} → ${esc(x[2])}`).join("; ")})`);
+    if (diff.removed.length) parts.push(`<span class="del">− ${diff.removed.length} removed</span> (${diff.removed.map(esc).join(", ")})`);
+    dl = parts.length ? `<p class="diffline">Schema change: ${parts.join("; ")}</p>` : `<p class="diffline">Schema change: none, same fields.</p>`;
+  }
+  dBody.innerHTML = `
+    <p class="dwhat"><span class="dplat ${plat}">${pn}</span> <b>${esc(stepLabel(id))}</b><br>${esc(d.what || "")}</p>
+    <div class="dgrid">
+      <div class="dpane"><h3>Before</h3>${blockHtml(d.in, diff, "in")}</div>
+      <div class="darrow" aria-hidden="true">→</div>
+      <div class="dpane"><h3>After</h3>${blockHtml(d.out, diff, "out")}${d.extra.map(t => `<div class="extra">${blockHtml(t, null, "out")}</div>`).join("")}</div>
+    </div>
+    <div class="note dwhy"><h3>What this step changed</h3><p>${esc(d.why || "")}</p>${dl}</div>
+    ${d.code ? `<details class="codeb" open><summary>Code on ${pn}: ${esc(d.code.lang)}</summary><pre class="code"><code>${esc(d.code.text)}</code></pre></details>` : ""}
+    <p class="dpager muted">Step ${k+1} of ${STEP_ORDER.length}</p>`;
+}
+function gotoStep(id){
+  if (id.startsWith("p:")) select({kind:"plane", group:id.slice(2)}); else select({kind:"node", id});
+}
+dStep.addEventListener("change", () => gotoStep(dStep.value));
+document.getElementById("dPrev").addEventListener("click", () => { const k = STEP_ORDER.indexOf(state.dstep); gotoStep(STEP_ORDER[(k - 1 + STEP_ORDER.length) % STEP_ORDER.length]); });
+document.getElementById("dNext").addEventListener("click", () => { const k = STEP_ORDER.indexOf(state.dstep); gotoStep(STEP_ORDER[(k + 1) % STEP_ORDER.length]); });
+
+/* ---------- boot ---------- */
+new ResizeObserver(resize).observe(canvas.parentElement);
+resize(); renderPanel(); renderLayers(); buildTable(); buildSources(); fillStepSelect(); renderInspector();
+function readHash(){
+  const h = location.hash.replace(/^#/, "");
+  if (!/(^|&)(step|plat)=/.test(h)) return;
+  const q = new URLSearchParams(h);
+  const p = q.get("plat"), s = q.get("step");
+  if (p === "aws" || p === "dbx") setPlat(p);
+  if (s && STEP_ORDER.includes(s)){ gotoStep(s); document.getElementById("data").scrollIntoView(); }
+}
+readHash();
+state.booted = true;
+window.addEventListener("hashchange", readHash);
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

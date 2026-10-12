@@ -191,7 +191,7 @@ _No input: this is where the data starts (a customer system outside the platform
 
 #### 這一步改了什麼
 
-原始事件刻意埋了五個典型問題：時間是當地時間的「字串」、一筆事件有多個商品、會重送（E2）、會晚到（E3）、韌體升級多出新欄位（E4）、偶爾有壞資料（E5）。後面每一步，就是在逐一處理它們。
+原始事件刻意埋了六個典型問題：時間是當地時間的「字串」、一筆事件有多個商品、會重送（E2）、會晚到（E3）、韌體升級多出新欄位（E4）、偶爾有壞資料（E5）。後面每一步，就是在逐一處理它們。
 
 [Open this step in the 3D lab](../lab/retail-3d.html#step=pos&plat=dbx)
 
@@ -351,7 +351,7 @@ _No input: this is where the data starts (a customer system outside the platform
 
 #### 這一步改了什麼
 
-原始事件刻意埋了五個典型問題：時間是當地時間的「字串」、一筆事件有多個商品、會重送（E2）、會晚到（E3）、韌體升級多出新欄位（E4）、偶爾有壞資料（E5）。後面每一步，就是在逐一處理它們。
+原始事件刻意埋了六個典型問題：時間是當地時間的「字串」、一筆事件有多個商品、會重送（E2）、會晚到（E3）、韌體升級多出新欄位（E4）、偶爾有壞資料（E5）。後面每一步，就是在逐一處理它們。
 
 [Open this step in the 3D lab](../lab/retail-3d.html#step=pos&plat=aws)
 

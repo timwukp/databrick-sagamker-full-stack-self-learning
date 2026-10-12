@@ -90,7 +90,7 @@ ol.talk li b{font-weight:600}
 .srcs{columns:2;column-gap:36px;font-size:13.5px}
 .srcs li{break-inside:avoid;margin:0 0 4px}
 .muted{color:var(--muted)}
-.crumb{margin:0 0 14px;font-size:13.5px;color:var(--muted)} .crumb a{font-weight:600;color:var(--ink)}
+.crumb{margin:0 0 14px;font-size:13.5px;color:var(--muted)} .crumb a{font-weight:600;color:var(--ink)} .crumb .lang{float:right;font-weight:600}
 /* data inspector */
 .dhead{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:flex-end;justify-content:space-between}
 .dhead .sub{margin-bottom:0}
@@ -154,7 +154,7 @@ details.codeb{margin-top:12px} details.codeb summary{cursor:pointer;font:600 14p
 </head>
 <body>
 <div class="wrap">
-<p class="crumb"><a href="../index.html">Databricks × AWS self-study</a> <span aria-hidden="true">/</span> 3D lab</p>
+<p class="crumb"><a href="../index.html">Databricks × AWS self-study</a> <span aria-hidden="true">/</span> 3D lab <a class="lang" href="../en/lab/retail-3d.html" hreflang="en">English</a></p>
 
 <header class="top">
   <div>
@@ -590,7 +590,7 @@ const DATA = {
     {label:"E3 Bangkok, sold 23:58, reached Kafka at 00:07 the next day", flag:"late", obj:E3},
     {label:"E4 new POS firmware adds loyalty_id", flag:"evo", obj:E4},
     {label:"E5 scanner glitch: no SKU, qty 0", flag:"bad", obj:E5}], POS_COLS),
-  why:"原始事件刻意埋了五個典型問題：時間是當地時間的「字串」、一筆事件有多個商品、會重送（E2）、會晚到（E3）、韌體升級多出新欄位（E4）、偶爾有壞資料（E5）。後面每一步，就是在逐一處理它們。"
+  why:"原始事件刻意埋了六個典型問題：時間是當地時間的「字串」、一筆事件有多個商品、會重送（E2）、會晚到（E3）、韌體升級多出新欄位（E4）、偶爾有壞資料（E5）。後面每一步，就是在逐一處理它們。"
  },
  ext:{
   what:"促銷部門每週丟一份 CSV 到 S3；天氣與節日也是類似的外部檔案或 API。",
