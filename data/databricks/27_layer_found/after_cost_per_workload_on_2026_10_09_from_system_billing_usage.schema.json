@@ -1,0 +1,24 @@
+{
+  "name": "Cost per workload on 2026-10-09, from system.billing.usage",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "usage_date",
+      "type": "DATE",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "workload",
+      "type": "STRING",
+      "tag": null,
+      "note": "custom_tags['workload'], set on every job, pipeline, warehouse and endpoint"
+    },
+    {
+      "name": "dbus",
+      "type": "DECIMAL(38,2)",
+      "tag": null,
+      "note": "SUM(usage_quantity) where usage_unit = 'DBU'"
+    }
+  ]
+}

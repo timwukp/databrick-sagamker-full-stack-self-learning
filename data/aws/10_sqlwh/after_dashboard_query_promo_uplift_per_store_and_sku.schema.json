@@ -1,0 +1,42 @@
+{
+  "name": "Dashboard query: promo uplift per store and SKU (Athena)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "store_id",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "sku",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "units_today",
+      "type": "bigint",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "units_same_day_last_week",
+      "type": "bigint",
+      "tag": null,
+      "note": "offline feature store: units_lag_7"
+    },
+    {
+      "name": "uplift_pct",
+      "type": "double",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "is_promo",
+      "type": "boolean",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

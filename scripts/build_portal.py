@@ -22,7 +22,7 @@ STRIP = [  # (stage, Databricks, AWS)
     ("Ingest", "Kafka, Auto Loader, Lakeflow Connect", "MSK, Glue jobs, zero-ETL or DMS"),
     ("Raw (bronze)", "Streaming tables (Delta)", "Iceberg in S3 Tables"),
     ("Clean (silver)", "Lakeflow Spark Declarative Pipelines", "Glue ETL or EMR Serverless"),
-    ("Curated (gold)", "Materialized views", "Iceberg tables + Athena"),
+    ("Curated (gold)", "Materialized views, SQL warehouse, OpenSharing", "Iceberg tables, Athena or Redshift, Lake Formation sharing"),
     ("Features", "Feature Store in UC, Online Feature Store", "SageMaker Feature Store"),
     ("Train and register", "applyInPandas, MLflow 3, Models in UC", "Training jobs, MLflow Apps, Model Registry"),
     ("Serve", "Lakeflow Jobs batch, Model Serving", "Batch Transform, real-time endpoint"),
@@ -195,7 +195,7 @@ footer{{margin-top:70px;padding-top:18px;border-top:1px solid var(--rule);font-s
 <table>
 <tbody>
 <tr><td><a href="{REPO_URL}/blob/main/docs/use-case.md">Use case</a></td><td>業務問題、合成數據的世界、刻意埋的問題、數字如何對帳</td></tr>
-<tr><td><a href="{REPO_URL}/blob/main/docs/data-walkthrough.md">Data walkthrough</a></td><td>24 步 × 兩個平台的處理前 / 處理後資料、schema、說明與程式碼（文字版）</td></tr>
+<tr><td><a href="{REPO_URL}/blob/main/docs/data-walkthrough.md">Data walkthrough</a></td><td>每一步 × 兩個平台的處理前 / 處理後資料、schema、說明與程式碼（文字版）</td></tr>
 <tr><td><a href="{REPO_URL}/blob/main/docs/databricks-vs-aws-mapping.md">Component map</a></td><td>每一格的 Databricks 與 AWS 元件、官方文件連結、學習重點</td></tr>
 <tr><td><a href="{REPO_URL}/blob/main/docs/common-mistakes.md">Common mistakes</a></td><td>過期名稱、錯誤數據流、過度承諾，以及正確說法</td></tr>
 <tr><td><a href="{REPO_URL}/blob/main/docs/talk-track.md">Talk track</a></td><td>90 秒英文講解，附 AWS 對照</td></tr>

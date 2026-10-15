@@ -49,13 +49,13 @@
 2. Ingest — Kafka / MSK、Auto Loader / Glue、Lakeflow Connect / zero-ETL 或 DMS
 3. Raw (bronze) — 原封不動保存；串流特徵也從這裡開始算
 4. Clean (silver) — 去重、驗證、攤平、時區、型別
-5. Curated (gold) — 一天 × 一店 × 一 SKU；倉庫期末庫存
+5. Curated (gold) — 一天 × 一店 × 一 SKU；倉庫期末庫存。同一層還有給 BI 的 SQL 引擎（SQL warehouse 對 Athena / Redshift）和對供應商的資料分享（OpenSharing 對 Lake Formation 跨帳號共享）
 6. Features — 離線特徵表（point-in-time）與線上特徵庫
 7. Train and register — many-models 訓練、MLflow、模型註冊
 8. Serve — 每晚批次打分、日內即時 endpoint、監控與回饋迴圈
 9. Use — 採購建議、店經理 app、GenAI agent
 
-另外三個「層」橫跨所有階段：治理（Unity Catalog 對 SageMaker Catalog + Lake Formation + IAM）、儲存（Delta 對 Iceberg，都在 S3）、工作與排程（一個 workspace + Lakeflow Jobs 對 Unified Studio + SageMaker AI Studio + Pipelines / Step Functions）。
+另外四個「層」橫跨所有階段：治理（Unity Catalog 對 SageMaker Catalog + Lake Formation + IAM）、儲存（Delta 對 Iceberg，都在 S3）、工作與排程（一個 workspace + Lakeflow Jobs 對 Unified Studio + SageMaker AI Studio + Pipelines / Step Functions），以及最底層的基礎（身分、金鑰、稽核、成本、CI/CD）。
 
 ## 數字如何前後對得上
 
@@ -65,6 +65,8 @@
 - Gold 的營收：`units × 單價 × (1 − 折扣)`，例如 SG 泡麵 186 × 6.90 × 0.8 = 1026.72。
 - 採購建議：未來 7 天 p50 合計 2456 + 安全庫存 420 − 期末庫存 1180 − 在途 600 = 1096，按箱規 24 取整成 1104（46 箱）。
 - 串流特徵：最近 15 分鐘 2 + 4 + 1 = 7 個，最近 60 分鐘共 13 個。
+- 促銷效果（SQL warehouse 那一步）：今天的 units ÷ 上週同一天的 units_lag_7，例如 SG 泡麵 (186 − 92) ÷ 92 = 102.2%。
+- 分享給供應商的 view 只有 SKU-20871 的兩行，units 和 gold 一致（186、233）。
 - Agent trace：子 span 延遲加總 1830 + 210 + 340 + 1650 + 90 = 4120 ms，等於父 span。
 
 Gold 那一層用的是「整天」的總數（例如 186 個），前面 silver 只展示其中 4 行樣本；E1 貢獻其中 2 個。

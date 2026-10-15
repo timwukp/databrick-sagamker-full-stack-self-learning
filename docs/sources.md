@@ -1,6 +1,6 @@
 # Sources
 
-Every product name and behaviour in this repository was checked against official documentation on 2026-10-10 and 2026-10-11. Databricks pages showed last-updated dates in September–October 2026.
+Every product name and behaviour in this repository was checked against official documentation on 2026-10-10 and 2026-10-11, and the SQL warehouse, sharing, federation and foundation additions on 2026-10-15. Databricks pages showed last-updated dates in September–October 2026.
 
 ## Opened and read
 
@@ -40,6 +40,20 @@ Every product name and behaviour in this repository was checked against official
 - [AWS: Data Capture](https://docs.aws.amazon.com/sagemaker/latest/dg/model-monitor-data-capture.html)
 - [AWS: Feature Store concepts](https://docs.aws.amazon.com/sagemaker/latest/dg/feature-store-concepts.html)
 - [AWS: Feature Store offline store format](https://docs.aws.amazon.com/sagemaker/latest/dg/feature-store-offline.html)
+- [Databricks: SQL warehouses](https://docs.databricks.com/aws/en/compute/sql-warehouse/)
+- [Databricks: Photon](https://docs.databricks.com/aws/en/compute/photon)
+- [Databricks: OpenSharing (formerly Delta Sharing)](https://docs.databricks.com/aws/en/opensharing/)
+- [Databricks: Lakehouse Federation](https://docs.databricks.com/aws/en/query-federation/)
+- [Databricks: Catalog federation](https://docs.databricks.com/aws/en/query-federation/catalog-federation)
+- [Databricks: System tables](https://docs.databricks.com/aws/en/admin/system-tables/)
+- [Databricks: Declarative Automation Bundles](https://docs.databricks.com/aws/en/dev-tools/bundles/)
+- [Databricks: Security and compliance](https://docs.databricks.com/aws/en/security/)
+- [Databricks: SCIM provisioning](https://docs.databricks.com/aws/en/admin/users-groups/scim/)
+- [AWS: Amazon Athena](https://docs.aws.amazon.com/athena/latest/ug/what-is.html)
+- [AWS: Amazon Redshift](https://docs.aws.amazon.com/redshift/latest/mgmt/welcome.html)
+- [AWS: Lake Formation cross-account data sharing](https://docs.aws.amazon.com/lake-formation/latest/dg/cross-account-permissions.html)
+- [AWS: IAM Identity Center](https://docs.aws.amazon.com/singlesignon/latest/userguide/what-is.html)
+- [AWS: Cost Explorer](https://docs.aws.amazon.com/cost-management/latest/userguide/ce-what-is.html)
 
 ## Linked from the pages above, or standard documentation URLs (not re-read page by page)
 
@@ -67,6 +81,6 @@ Every product name and behaviour in this repository was checked against official
 
 ## Not verified here
 
-- Exact connector coverage for a given SAP version (Lakeflow Connect vs SAP Business Data Cloud / Delta Sharing): check against the customer's landscape.
+- Exact connector coverage for a given SAP version (Lakeflow Connect vs SAP Business Data Cloud / OpenSharing): check against the customer's landscape.
 - Latency, throughput and cost figures: none are quoted on purpose; design to the customer's SLA.
 - The synthetic data values: invented, internally consistent, not benchmarks.

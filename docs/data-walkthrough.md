@@ -16,21 +16,24 @@ Legend for row notes: duplicate, fails check, late, schema change, changed, look
 7. [Raw (bronze): Bronze streaming tables](#step-7)
 8. [Clean (silver): Silver: Lakeflow Spark Declarative Pipelines](#step-8)
 9. [Curated (gold): Gold materialized views](#step-9)
-10. [Features: Feature Store in Unity Catalog](#step-10)
-11. [Raw (bronze): Structured Streaming, real-time mode](#step-11)
-12. [Features: Online Feature Store](#step-12)
-13. [Train and register: Many-models training](#step-13)
-14. [Train and register: MLflow 3, managed](#step-14)
-15. [Train and register: Models in Unity Catalog](#step-15)
-16. [Serve: Batch inference job](#step-16)
-17. [Use: Warehouse inventory forecast](#step-17)
-18. [Serve: Model Serving endpoint](#step-18)
-19. [Use: Store sales forecast](#step-19)
-20. [Serve: Data quality monitoring](#step-20)
-21. [Use: Genie + Agent Bricks](#step-21)
-22. [Layer: Governance](#step-22)
-23. [Layer: Storage](#step-23)
-24. [Layer: Where people work and how jobs run](#step-24)
+10. [Curated (gold): Databricks SQL warehouse](#step-10)
+11. [Curated (gold): OpenSharing (formerly Delta Sharing)](#step-11)
+12. [Features: Feature Store in Unity Catalog](#step-12)
+13. [Raw (bronze): Structured Streaming, real-time mode](#step-13)
+14. [Features: Online Feature Store](#step-14)
+15. [Train and register: Many-models training](#step-15)
+16. [Train and register: MLflow 3, managed](#step-16)
+17. [Train and register: Models in Unity Catalog](#step-17)
+18. [Serve: Batch inference job](#step-18)
+19. [Use: Warehouse inventory forecast](#step-19)
+20. [Serve: Model Serving endpoint](#step-20)
+21. [Use: Store sales forecast](#step-21)
+22. [Serve: Data quality monitoring](#step-22)
+23. [Use: Genie + Agent Bricks](#step-23)
+24. [Layer: Governance](#step-24)
+25. [Layer: Storage](#step-25)
+26. [Layer: Where people work and how jobs run](#step-26)
+27. [Layer: Foundation: identity, security, cost, CI/CD](#step-27)
 
 <a id="step-1"></a>
 ## 1. Sources: Store POS terminals
@@ -800,7 +803,7 @@ job.commit()                                 # saves the bookmark
 
 #### 這一步改了什麼
 
-SCD type 2 的意思：每次變更都保留一個版本，用 __START_AT / __END_AT 標出有效期間。舊版本被「關閉」而不是被覆蓋，所以能回答「昨晚 10 點庫存是多少」——這正是訓練模型時要的歷史。資料庫型 ERP 可用 Lakeflow Connect 的資料庫 connector；SAP 實務上也常走 SAP Business Data Cloud 的 Delta Sharing，依客戶 SAP 版本而定。
+SCD type 2 的意思：每次變更都保留一個版本，用 __START_AT / __END_AT 標出有效期間。舊版本被「關閉」而不是被覆蓋，所以能回答「昨晚 10 點庫存是多少」——這正是訓練模型時要的歷史。資料庫型 ERP 可用 Lakeflow Connect 的資料庫 connector；SAP 實務上也常走 SAP Business Data Cloud 的 OpenSharing（前身 Delta Sharing），依客戶 SAP 版本而定。
 
 #### Code (SQL (Lakeflow pipeline, from a change feed))
 
@@ -1409,7 +1412,299 @@ WHEN NOT MATCHED THEN INSERT (business_date, store_id, sku, units, …)
 [Open this step in the 3D lab](../lab/retail-3d.html#step=gold&plat=aws)
 
 <a id="step-10"></a>
-## 10. Features: Feature Store in Unity Catalog
+## 10. Curated (gold): Databricks SQL warehouse
+
+### On Databricks: Curated (gold): Databricks SQL warehouse
+
+BI 和 Genie 不直接讀檔案：一個 SQL 引擎對 gold 表跑查詢，權限照治理層。這裡問：促銷讓哪些店多賣了多少？
+
+#### Before
+
+**retail.gold.daily_store_sku (materialized view)**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `business_date` | DATE |  |  |
+| `store_id` | STRING |  |  |
+| `sku` | STRING |  |  |
+| `units` | BIGINT |  |  |
+| `net_revenue` | DECIMAL(14,2) |  |  |
+| `currency` | STRING |  |  |
+| `txn_count` | BIGINT |  |  |
+| `is_promo` | BOOLEAN |  | joined from the promo calendar |
+
+| row note | business_date | store_id | sku | units | net_revenue | currency | txn_count | is_promo |
+|---|---|---|---|---|---|---|---|---|
+| hl: includes E1's 2 units plus the rest of the day | 2026-10-09 | SG-ORCH-001 | SKU-20871 | 186 | 1026.72 | SGD | 141 | true |
+|  | 2026-10-09 | SG-ORCH-001 | SKU-10023 | 64 | 252.80 | SGD | 60 | false |
+|  | 2026-10-09 | MY-KUL-014 | SKU-20871 | 233 | 1398.00 | MYR | 170 | true |
+|  | 2026-10-09 | TH-BKK-007 | SKU-31045 | 21 | 6069.00 | THB | 21 | false |
+
+_Full-day totals. The four silver rows above are part of these numbers (for example E1 contributes 2 of the 186 units)._
+
+#### After
+
+**Dashboard query: promo uplift per store and SKU (run on a SQL warehouse)**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `store_id` | STRING |  |  |
+| `sku` | STRING |  |  |
+| `units_today` | BIGINT |  | gold.daily_store_sku.units |
+| `units_same_day_last_week` | INT |  | feature table: units_lag_7 |
+| `uplift_pct` | DOUBLE |  | (today − last week) ÷ last week × 100 |
+| `is_promo` | BOOLEAN |  |  |
+
+| row note | store_id | sku | units_today | units_same_day_last_week | uplift_pct | is_promo |
+|---|---|---|---|---|---|---|
+| hl: the promo roughly doubles units; the agent quotes 92 → 186 later | SG-ORCH-001 | SKU-20871 | 186 | 92 | 102.2 | true |
+|  | MY-KUL-014 | SKU-20871 | 233 | 118 | 97.5 | true |
+|  | TH-BKK-007 | SKU-31045 | 21 | 19 | 10.5 | false |
+|  | SG-ORCH-001 | SKU-10023 | 64 | 61 | 4.9 | false |
+
+_Same numbers a planner sees in an AI/BI dashboard, in Genie, or in Power BI connected to the same warehouse._
+
+#### 這一步改了什麼
+
+SQL warehouse 是專門跑 SQL 和 BI 的運算：serverless、閒置自動停止，Photon 是預設引擎。不管查詢是從 AI/BI dashboard、Genie 還是 Power BI 發出，都套用 UC 的 row filter 與 column mask（見治理層），泰國採購看到的仍然只有 TH。每一筆查詢都記在 system tables，可以稽核誰查了什麼。
+
+#### Code (SQL (Databricks SQL warehouse))
+
+```
+SELECT g.store_id, g.sku,
+       g.units                                                   AS units_today,
+       f.units_lag_7                                             AS units_same_day_last_week,
+       ROUND(100.0 * (g.units - f.units_lag_7) / f.units_lag_7, 1) AS uplift_pct,
+       g.is_promo
+FROM retail.gold.daily_store_sku g
+JOIN retail.features.store_sku_daily f USING (store_id, sku, business_date)
+WHERE g.business_date = DATE'2026-10-09'
+ORDER BY uplift_pct DESC;
+```
+
+[Open this step in the 3D lab](../lab/retail-3d.html#step=sqlwh&plat=dbx)
+
+### On AWS: Curated (gold): Amazon Athena or Redshift Serverless
+
+BI 和 Genie 不直接讀檔案：一個 SQL 引擎對 gold 表跑查詢，權限照治理層。這裡問：促銷讓哪些店多賣了多少？
+
+#### Before
+
+**s3tablescatalog/retail-lake.gold.daily_store_sku (Iceberg, refreshed by a scheduled job)**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `business_date` | date |  |  |
+| `store_id` | string |  |  |
+| `sku` | string |  |  |
+| `units` | long |  |  |
+| `net_revenue` | decimal(14,2) |  |  |
+| `currency` | string |  |  |
+| `txn_count` | long |  |  |
+| `is_promo` | boolean |  | joined from the promo calendar |
+
+| row note | business_date | store_id | sku | units | net_revenue | currency | txn_count | is_promo |
+|---|---|---|---|---|---|---|---|---|
+| hl: includes E1's 2 units plus the rest of the day | 2026-10-09 | SG-ORCH-001 | SKU-20871 | 186 | 1026.72 | SGD | 141 | true |
+|  | 2026-10-09 | SG-ORCH-001 | SKU-10023 | 64 | 252.80 | SGD | 60 | false |
+|  | 2026-10-09 | MY-KUL-014 | SKU-20871 | 233 | 1398.00 | MYR | 170 | true |
+|  | 2026-10-09 | TH-BKK-007 | SKU-31045 | 21 | 6069.00 | THB | 21 | false |
+
+_Full-day totals. The four silver rows above are part of these numbers (for example E1 contributes 2 of the 186 units)._
+
+#### After
+
+**Dashboard query: promo uplift per store and SKU (Athena)**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `store_id` | string |  |  |
+| `sku` | string |  |  |
+| `units_today` | bigint |  |  |
+| `units_same_day_last_week` | bigint |  | offline feature store: units_lag_7 |
+| `uplift_pct` | double |  |  |
+| `is_promo` | boolean |  |  |
+
+| row note | store_id | sku | units_today | units_same_day_last_week | uplift_pct | is_promo |
+|---|---|---|---|---|---|---|
+| hl: same answer, different engine | SG-ORCH-001 | SKU-20871 | 186 | 92 | 102.2 | true |
+|  | MY-KUL-014 | SKU-20871 | 233 | 118 | 97.5 | true |
+|  | TH-BKK-007 | SKU-31045 | 21 | 19 | 10.5 | false |
+|  | SG-ORCH-001 | SKU-10023 | 64 | 61 | 4.9 | false |
+
+#### 這一步改了什麼
+
+Athena 直接在 Iceberg 表上跑同一段 SQL，按掃描量計費；高並發的儀表板通常改用 Redshift Serverless。Lake Formation 的 data cells filter 一樣生效。差別在 join 的另一邊：AWS 的特徵在 SageMaker Feature Store 的 offline store（Glue 裡的一張表），key 是拼起來的 store_sku，而且保留每次寫入的歷史，查詢時要自己取最新一筆。
+
+#### Code (SQL (Athena))
+
+```
+SELECT g.store_id, g.sku, g.units AS units_today,
+       f.units_lag_7 AS units_same_day_last_week,
+       ROUND(100.0 * (g.units - f.units_lag_7) / f.units_lag_7, 1) AS uplift_pct,
+       g.is_promo
+FROM gold.daily_store_sku g
+JOIN "sagemaker_featurestore"."store_sku_daily_1728461102" f
+  ON f.store_sku = g.store_id || '#' || g.sku
+ AND f.is_deleted = false
+WHERE g.business_date = DATE '2026-10-09'
+ORDER BY uplift_pct DESC;
+```
+
+[Open this step in the 3D lab](../lab/retail-3d.html#step=sqlwh&plat=aws)
+
+<a id="step-11"></a>
+## 11. Curated (gold): OpenSharing (formerly Delta Sharing)
+
+### On Databricks: Curated (gold): OpenSharing (formerly Delta Sharing)
+
+把 sell-through 分享給供應商：對方查的是活的表，不是每天寄一份 CSV。供應商 A 只該看到自己的 SKU，而且看不到營收。
+
+#### Before
+
+**retail.gold.daily_store_sku (materialized view)**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `business_date` | DATE |  |  |
+| `store_id` | STRING |  |  |
+| `sku` | STRING |  |  |
+| `units` | BIGINT |  |  |
+| `net_revenue` | DECIMAL(14,2) |  |  |
+| `currency` | STRING |  |  |
+| `txn_count` | BIGINT |  |  |
+| `is_promo` | BOOLEAN |  | joined from the promo calendar |
+
+| row note | business_date | store_id | sku | units | net_revenue | currency | txn_count | is_promo |
+|---|---|---|---|---|---|---|---|---|
+| hl: includes E1's 2 units plus the rest of the day | 2026-10-09 | SG-ORCH-001 | SKU-20871 | 186 | 1026.72 | SGD | 141 | true |
+|  | 2026-10-09 | SG-ORCH-001 | SKU-10023 | 64 | 252.80 | SGD | 60 | false |
+|  | 2026-10-09 | MY-KUL-014 | SKU-20871 | 233 | 1398.00 | MYR | 170 | true |
+|  | 2026-10-09 | TH-BKK-007 | SKU-31045 | 21 | 6069.00 | THB | 21 | false |
+
+_Full-day totals. The four silver rows above are part of these numbers (for example E1 contributes 2 of the 186 units)._
+
+#### After
+
+**What supplier A sees: retail.share.daily_sku_supplier_a (shared view)**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `business_date` | DATE |  |  |
+| `store_id` | STRING |  |  |
+| `sku` | STRING |  |  |
+| `units` | BIGINT |  |  |
+| `is_promo` | BOOLEAN |  |  |
+
+| row note | business_date | store_id | sku | units | is_promo |
+|---|---|---|---|---|---|
+| hl: only SKU-20871; net_revenue, currency and txn_count are not shared | 2026-10-09 | SG-ORCH-001 | SKU-20871 | 186 | true |
+|  | 2026-10-09 | MY-KUL-014 | SKU-20871 | 233 | true |
+
+**Share objects in Unity Catalog**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `object` | STRING |  |  |
+| `name` | STRING |  |  |
+| `detail` | STRING |  |  |
+
+| object | name | detail |
+|---|---|---|
+| share | supplier_a | view retail.share.daily_sku_supplier_a |
+| recipient | supplier_a_team | open sharing: activation link, no Databricks account needed |
+| grant | SELECT ON SHARE supplier_a | to recipient supplier_a_team; revoke to stop sharing |
+
+#### 這一步改了什麼
+
+OpenSharing 分享的是 UC 裡的表或 view：這裡先用一個 view 只留供應商自己的 SKU、拿掉營收欄，再把 view 加進 share。對方讀到的永遠是最新版本，不必每天匯出；要停止就撤銷 recipient。對方如果也用 Databricks，表會直接出現在他自己的 Unity Catalog。
+
+#### Code (SQL (Unity Catalog, OpenSharing))
+
+```
+CREATE VIEW retail.share.daily_sku_supplier_a AS
+SELECT business_date, store_id, sku, units, is_promo
+FROM retail.gold.daily_store_sku
+WHERE sku = 'SKU-20871';
+
+CREATE SHARE supplier_a;
+ALTER SHARE supplier_a ADD VIEW retail.share.daily_sku_supplier_a;
+CREATE RECIPIENT supplier_a_team;          -- open sharing: returns an activation link
+GRANT SELECT ON SHARE supplier_a TO RECIPIENT supplier_a_team;
+```
+
+[Open this step in the 3D lab](../lab/retail-3d.html#step=share&plat=dbx)
+
+### On AWS: Curated (gold): Lake Formation cross-account sharing
+
+把 sell-through 分享給供應商：對方查的是活的表，不是每天寄一份 CSV。供應商 A 只該看到自己的 SKU，而且看不到營收。
+
+#### Before
+
+**s3tablescatalog/retail-lake.gold.daily_store_sku (Iceberg, refreshed by a scheduled job)**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `business_date` | date |  |  |
+| `store_id` | string |  |  |
+| `sku` | string |  |  |
+| `units` | long |  |  |
+| `net_revenue` | decimal(14,2) |  |  |
+| `currency` | string |  |  |
+| `txn_count` | long |  |  |
+| `is_promo` | boolean |  | joined from the promo calendar |
+
+| row note | business_date | store_id | sku | units | net_revenue | currency | txn_count | is_promo |
+|---|---|---|---|---|---|---|---|---|
+| hl: includes E1's 2 units plus the rest of the day | 2026-10-09 | SG-ORCH-001 | SKU-20871 | 186 | 1026.72 | SGD | 141 | true |
+|  | 2026-10-09 | SG-ORCH-001 | SKU-10023 | 64 | 252.80 | SGD | 60 | false |
+|  | 2026-10-09 | MY-KUL-014 | SKU-20871 | 233 | 1398.00 | MYR | 170 | true |
+|  | 2026-10-09 | TH-BKK-007 | SKU-31045 | 21 | 6069.00 | THB | 21 | false |
+
+_Full-day totals. The four silver rows above are part of these numbers (for example E1 contributes 2 of the 186 units)._
+
+#### After
+
+**What supplier A's AWS account sees (resource link to the shared table)**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `business_date` | date |  |  |
+| `store_id` | string |  |  |
+| `sku` | string |  |  |
+| `units` | bigint |  |  |
+| `is_promo` | boolean |  |  |
+
+| row note | business_date | store_id | sku | units | is_promo |
+|---|---|---|---|---|---|
+| hl: data cells filter: SKU-20871 rows, revenue columns excluded | 2026-10-09 | SG-ORCH-001 | SKU-20871 | 186 | true |
+|  | 2026-10-09 | MY-KUL-014 | SKU-20871 | 233 | true |
+
+#### 這一步改了什麼
+
+Lake Formation 可以把一張表或一個 data cells filter 授權給另一個 AWS 帳號，透過 AWS RAM 送達；對方建立 resource link 之後用 Athena 查。前提是供應商也在 AWS，而且雙方都要管理跨帳號授權。供應商不在 AWS 時，需要另找方式，例如排程匯出檔案。
+
+#### Code (Python (boto3, Lake Formation))
+
+```
+lf.create_data_cells_filter(TableData={
+    "TableCatalogId": ACCOUNT_ID, "DatabaseName": "gold",
+    "TableName": "daily_store_sku", "Name": "supplier_a",
+    "RowFilter": {"FilterExpression": "sku = 'SKU-20871'"},
+    "ColumnNames": ["business_date", "store_id", "sku", "units", "is_promo"]})
+
+lf.grant_permissions(
+    Principal={"DataLakePrincipalIdentifier": SUPPLIER_ACCOUNT_ID},
+    Resource={"DataCellsFilter": {"TableCatalogId": ACCOUNT_ID, "DatabaseName": "gold",
+                                  "TableName": "daily_store_sku", "Name": "supplier_a"}},
+    Permissions=["SELECT"])
+# the supplier accepts the AWS RAM invitation, then creates a resource link for Athena
+```
+
+[Open this step in the 3D lab](../lab/retail-3d.html#step=share&plat=aws)
+
+<a id="step-12"></a>
+## 12. Features: Feature Store in Unity Catalog
 
 ### On Databricks: Features: Feature Store in Unity Catalog
 
@@ -1553,8 +1848,8 @@ fg.create(
 
 [Open this step in the 3D lab](../lab/retail-3d.html#step=fs_off&plat=aws)
 
-<a id="step-11"></a>
-## 11. Raw (bronze): Structured Streaming, real-time mode
+<a id="step-13"></a>
+## 13. Raw (bronze): Structured Streaming, real-time mode
 
 ### On Databricks: Raw (bronze): Structured Streaming, real-time mode
 
@@ -1668,8 +1963,8 @@ GROUP BY store_id, sku, window_start, window_end;
 
 [Open this step in the 3D lab](../lab/retail-3d.html#step=rtc&plat=aws)
 
-<a id="step-12"></a>
-## 12. Features: Online Feature Store
+<a id="step-14"></a>
+## 14. Features: Online Feature Store
 
 ### On Databricks: Features: Online Feature Store
 
@@ -1809,8 +2104,8 @@ rec = fs.get_record(
 
 [Open this step in the 3D lab](../lab/retail-3d.html#step=fs_on&plat=aws)
 
-<a id="step-13"></a>
-## 13. Train and register: Many-models training
+<a id="step-15"></a>
+## 15. Train and register: Many-models training
 
 ### On Databricks: Train and register: Many-models training
 
@@ -1947,8 +2242,8 @@ est.fit({"train": "s3://retail-ml/train/2026-10-09/"})
 
 [Open this step in the 3D lab](../lab/retail-3d.html#step=train&plat=aws)
 
-<a id="step-14"></a>
-## 14. Train and register: MLflow 3, managed
+<a id="step-16"></a>
+## 16. Train and register: MLflow 3, managed
 
 ### On Databricks: Train and register: MLflow 3, managed
 
@@ -2085,8 +2380,8 @@ mlflow.set_experiment("retail-demand")
 
 [Open this step in the 3D lab](../lab/retail-3d.html#step=mlflow&plat=aws)
 
-<a id="step-15"></a>
-## 15. Train and register: Models in Unity Catalog
+<a id="step-17"></a>
+## 17. Train and register: Models in Unity Catalog
 
 ### On Databricks: Train and register: Models in Unity Catalog
 
@@ -2205,8 +2500,8 @@ sm.update_model_package(
 
 [Open this step in the 3D lab](../lab/retail-3d.html#step=registry&plat=aws)
 
-<a id="step-16"></a>
-## 16. Serve: Batch inference job
+<a id="step-18"></a>
+## 18. Serve: Batch inference job
 
 ### On Databricks: Serve: Batch inference job
 
@@ -2335,8 +2630,8 @@ tf.transform("s3://retail-ml/batch-in/2026-10-09/", content_type="text/csv",
 
 [Open this step in the 3D lab](../lab/retail-3d.html#step=batch&plat=aws)
 
-<a id="step-17"></a>
-## 17. Use: Warehouse inventory forecast
+<a id="step-19"></a>
+## 19. Use: Warehouse inventory forecast
 
 ### On Databricks: Use: Warehouse inventory forecast
 
@@ -2451,8 +2746,8 @@ GROUP BY f.dc_id, f.sku, s.on_hand_eod, s.open_po_qty;
 
 [Open this step in the 3D lab](../lab/retail-3d.html#step=inv&plat=aws)
 
-<a id="step-18"></a>
-## 18. Serve: Model Serving endpoint
+<a id="step-20"></a>
+## 20. Serve: Model Serving endpoint
 
 ### On Databricks: Serve: Model Serving endpoint
 
@@ -2583,8 +2878,8 @@ resp = rt.invoke_endpoint(EndpointName="demand-forecaster",
 
 [Open this step in the 3D lab](../lab/retail-3d.html#step=rt&plat=aws)
 
-<a id="step-19"></a>
-## 19. Use: Store sales forecast
+<a id="step-21"></a>
+## 21. Use: Store sales forecast
 
 ### On Databricks: Use: Store sales forecast
 
@@ -2672,8 +2967,8 @@ AWS 上這個 app 常見是 API Gateway + Lambda 呼叫 endpoint，前端另外�
 
 [Open this step in the 3D lab](../lab/retail-3d.html#step=sales&plat=aws)
 
-<a id="step-20"></a>
-## 20. Serve: Data quality monitoring
+<a id="step-22"></a>
+## 22. Serve: Data quality monitoring
 
 ### On Databricks: Serve: Data quality monitoring
 
@@ -2833,8 +3128,8 @@ predictor = model.deploy(
 
 [Open this step in the 3D lab](../lab/retail-3d.html#step=monitor&plat=aws)
 
-<a id="step-21"></a>
-## 21. Use: Genie + Agent Bricks
+<a id="step-23"></a>
+## 23. Use: Genie + Agent Bricks
 
 ### On Databricks: Use: Genie + Agent Bricks
 
@@ -2959,8 +3254,8 @@ def invoke(payload):
 
 [Open this step in the 3D lab](../lab/retail-3d.html#step=genai&plat=aws)
 
-<a id="step-22"></a>
-## 22. Layer: Governance
+<a id="step-24"></a>
+## 24. Layer: Governance
 
 ### On Databricks: Layer: Governance
 
@@ -3092,8 +3387,8 @@ lf.create_data_cells_filter(TableData={
 
 [Open this step in the 3D lab](../lab/retail-3d.html#step=p:gov&plat=aws)
 
-<a id="step-23"></a>
-## 23. Layer: Storage
+<a id="step-25"></a>
+## 25. Layer: Storage
 
 ### On Databricks: Layer: Storage
 
@@ -3151,8 +3446,8 @@ Iceberg 用 metadata.json → manifest list → manifest → Parquet 的樹狀�
 
 [Open this step in the 3D lab](../lab/retail-3d.html#step=p:store&plat=aws)
 
-<a id="step-24"></a>
-## 24. Layer: Where people work and how jobs run
+<a id="step-26"></a>
+## 26. Layer: Where people work and how jobs run
 
 ### On Databricks: Layer: Where people work and how jobs run
 
@@ -3223,3 +3518,116 @@ _No input: this is where the data starts (a customer system outside the platform
 ML 這段用 SageMaker Pipelines；資料這段通常是 Glue workflow、Step Functions 或 MWAA。兩個排程器要互相觸發（例如 EventBridge），這是要說清楚的整合成本。
 
 [Open this step in the 3D lab](../lab/retail-3d.html#step=p:ws&plat=aws)
+
+<a id="step-27"></a>
+## 27. Layer: Foundation: identity, security, cost, CI/CD
+
+### On Databricks: Layer: Foundation: identity, security, cost, CI/CD
+
+最底層的身分、金鑰、稽核、成本與部署。這裡問：昨天每一條工作負載各花了多少？
+
+#### Before
+
+_No input: this is where the data starts (a customer system outside the platform)._
+
+#### After
+
+**Cost per workload on 2026-10-09, from system.billing.usage**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `usage_date` | DATE |  |  |
+| `workload` | STRING |  | custom_tags['workload'], set on every job, pipeline, warehouse and endpoint |
+| `dbus` | DECIMAL(38,2) |  | SUM(usage_quantity) where usage_unit = 'DBU' |
+
+| row note | usage_date | workload | dbus |
+|---|---|---|---|
+| hl: many-models training is the biggest line | 2026-10-09 | nightly_training | 118.2 |
+|  | 2026-10-09 | store_endpoint | 61.3 |
+|  | 2026-10-09 | ingest_pipeline | 42.5 |
+|  | 2026-10-09 | bi_warehouse | 37.9 |
+|  | 2026-10-09 | batch_scoring | 23.75 |
+
+_Synthetic values. Multiply DBUs by your contract price for cost; the S3, KMS and network charges stay on the AWS bill._
+
+**databricks.yml (Declarative Automation Bundles)**
+
+```text
+bundle:
+  name: retail-forecast
+
+resources:
+  jobs:
+    retail_nightly:
+      name: retail_nightly
+      tags: {workload: nightly_training}
+      tasks:
+        - task_key: train
+          notebook_task: {notebook_path: ./src/train_many_models.py}
+
+targets:
+  dev:  {mode: development, default: true}
+  prod: {mode: production}
+```
+
+#### 這一步改了什麼
+
+在 Databricks 裡，成本和稽核本身就是表：system.billing.usage 用 custom tag 把用量分到每條工作負載，system.access.audit 記錄誰改了權限。部署用 Declarative Automation Bundles（前身是 Databricks Asset Bundles）：job、pipeline、endpoint 都寫成 YAML，放在 Git，由 CI 部署到 dev / prod，tag 也一起寫死。金鑰（KMS）、網路（VPC、私有連線）和 CloudTrail 仍在客戶自己的 AWS 帳號，這部分兩個方案共用。
+
+#### Code (SQL (system tables))
+
+```
+SELECT usage_date,
+       custom_tags['workload'] AS workload,
+       SUM(usage_quantity)     AS dbus
+FROM system.billing.usage
+WHERE usage_date = DATE'2026-10-09' AND usage_unit = 'DBU'
+GROUP BY ALL
+ORDER BY dbus DESC;
+```
+
+[Open this step in the 3D lab](../lab/retail-3d.html#step=p:found&plat=dbx)
+
+### On AWS: Layer: Foundation: identity, security, cost, CI/CD
+
+最底層的身分、金鑰、稽核、成本與部署。這裡問：昨天每一條工作負載各花了多少？
+
+#### Before
+
+_No input: this is where the data starts (a customer system outside the platform)._
+
+#### After
+
+**Cost per workload on 2026-10-09, from Cost Explorer (grouped by the workload tag)**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `usage_date` | date |  |  |
+| `workload` | string |  | cost allocation tag |
+| `unblended_cost_usd` | decimal(12,2) |  | Glue, EMR, SageMaker AI, Athena, Flink… |
+
+| row note | usage_date | workload | unblended_cost_usd |
+|---|---|---|---|
+| hl: only adds up if every service was tagged | 2026-10-09 | nightly_training | 96.4 |
+|  | 2026-10-09 | store_endpoint | 52.8 |
+|  | 2026-10-09 | ingest_pipeline | 38.1 |
+|  | 2026-10-09 | bi_queries | 21.6 |
+|  | 2026-10-09 | batch_scoring | 17.25 |
+
+_Synthetic values. Cost Explorer refreshes at least once every 24 hours._
+
+#### 這一步改了什麼
+
+AWS 的成本看 Cost Explorer：以 cost allocation tag 分攤，資料至少每 24 小時更新一次；稽核看 CloudTrail；部署用 CloudFormation 或 CDK。一條管線的費用分散在 Glue、EMR、SageMaker AI、Athena、Flink 各自的帳上，所以 tag 規範要一開始就定好，否則加不起來。
+
+#### Code (Python (boto3, Cost Explorer))
+
+```
+ce.get_cost_and_usage(
+    TimePeriod={"Start": "2026-10-09", "End": "2026-10-10"},
+    Granularity="DAILY",
+    Metrics=["UnblendedCost"],
+    GroupBy=[{"Type": "TAG", "Key": "workload"}])
+```
+
+[Open this step in the 3D lab](../lab/retail-3d.html#step=p:found&plat=aws)

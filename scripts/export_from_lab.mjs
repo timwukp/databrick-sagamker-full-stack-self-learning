@@ -174,7 +174,7 @@ NODES.slice().sort((a, b) => a.s - b.s || a.l - b.l).forEach(n => {
   map.push(`| ${n.s + 1}. ${STAGES[n.s]} | ${cell(a)} | ${cell(b)} | ${mdCell(n.n || "")} |`);
 });
 map.push("", "## Layers under and over every step", "", `| layer | Databricks | AWS | ${L.key} |`, "|---|---|---|---|");
-for (const g of ["ws", "gov", "store"]) {
+for (const g of ["ws", "gov", "store", "found"]) {
   const t = pl => PLANES[pl].filter(x => x.group === g).map(x => `**${mdCell(x.t)}**<br>${mdCell(x.d)}${x.doc ? `<br>[doc](${x.doc})` : ""}`).join("<br><br>");
   map.push(`| ${GROUP_NAME[g]} | ${t("dbx")} | ${t("aws")} | ${mdCell(GROUP_NOTE[g])} |`);
 }

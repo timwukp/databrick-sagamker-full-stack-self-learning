@@ -1,0 +1,24 @@
+{
+  "name": "Share objects in Unity Catalog",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "object",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "name",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "detail",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

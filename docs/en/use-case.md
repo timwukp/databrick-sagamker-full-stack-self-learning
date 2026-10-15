@@ -49,13 +49,13 @@ Each step removes some of them, which is the fastest way to understand bronze �
 2. Ingest — Kafka / MSK, Auto Loader / Glue, Lakeflow Connect / zero-ETL or DMS
 3. Raw (bronze) — stored as is; streaming features are also computed from here
 4. Clean (silver) — dedupe, validate, flatten, time zones, types
-5. Curated (gold) — one day × one store × one SKU; warehouse end-of-day stock
+5. Curated (gold) — one day × one store × one SKU; warehouse end-of-day stock. The same stage also has a SQL engine for BI (SQL warehouse vs Athena / Redshift) and data sharing with suppliers (OpenSharing vs Lake Formation cross-account sharing)
 6. Features — offline feature tables (point-in-time) and the online feature store
 7. Train and register — many-models training, MLflow, model registry
 8. Serve — nightly batch scoring, intraday real-time endpoint, monitoring and feedback loop
 9. Use — purchase suggestions, store manager app, GenAI agent
 
-Three more “layers” span all stages: governance (Unity Catalog vs SageMaker Catalog + Lake Formation + IAM), storage (Delta vs Iceberg, both on S3), and workspace and orchestration (one workspace + Lakeflow Jobs vs Unified Studio + SageMaker AI Studio + Pipelines / Step Functions).
+Four more “layers” span all stages: governance (Unity Catalog vs SageMaker Catalog + Lake Formation + IAM), storage (Delta vs Iceberg, both on S3), workspace and orchestration (one workspace + Lakeflow Jobs vs Unified Studio + SageMaker AI Studio + Pipelines / Step Functions), and the foundation at the bottom (identity, keys, audit, cost and CI/CD).
 
 ## How the numbers reconcile
 
@@ -65,6 +65,8 @@ The numbers in this synthetic data are designed to reconcile, and `verify.py` re
 - Gold revenue: `units × unit price × (1 − discount)`, for example SG noodles 186 × 6.90 × 0.8 = 1026.72.
 - Purchase suggestion: next 7 days p50 total 2456 + safety stock 420 − end-of-day stock 1180 − in transit 600 = 1096, rounded up to the case size of 24 to get 1104 (46 cases).
 - Streaming features: last 15 minutes 2 + 4 + 1 = 7 units, last 60 minutes 13 units in total.
+- Promo uplift (the SQL warehouse step): today's units against last week's units_lag_7, for example SG instant noodles (186 − 92) ÷ 92 = 102.2%.
+- The view shared with the supplier has only the two SKU-20871 rows, with the same units as gold (186, 233).
 - Agent trace: child span latencies add up to 1830 + 210 + 340 + 1650 + 90 = 4120 ms, equal to the parent span.
 
 The gold layer uses totals for the “whole day” (for example 186 units), while silver before it shows only 4 sample rows; E1 contributes 2 of them.

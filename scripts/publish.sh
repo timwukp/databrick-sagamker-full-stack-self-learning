@@ -4,6 +4,7 @@
 #   - empty repo: bootstrap with the Contents API, then a full tree, no force
 #   - repo with history: new branch + PR (default) or --direct fast-forward of main
 #   - blob list is tab-separated, so paths with spaces survive
+#   - files that were removed or renamed locally are deleted on GitHub in the same commit
 #   - never uses force=true
 #   - author and committer are both set, using the noreply address
 #
@@ -111,6 +112,21 @@ if [ "$MODE" = "initial" ]; then
              | gh api -X POST "repos/$OWNER/$REPO/git/trees" --input - --jq .sha)
 else
   BASE_TREE=$(gh api "repos/$OWNER/$REPO/git/commits/$BASE_SHA" --jq .tree.sha)
+  # files that exist on main but no longer exist here (renamed or removed steps):
+  # delete them in this commit (sha: null), so the repo mirrors this folder exactly
+  if [ "$(gh api "repos/$OWNER/$REPO/git/trees/$BASE_TREE?recursive=1" --jq .truncated)" = "true" ]; then
+    echo "The remote tree is too large to list in one call; stopping instead of guessing deletions." >&2; exit 1
+  fi
+  gh api "repos/$OWNER/$REPO/git/trees/$BASE_TREE?recursive=1" --jq '.tree[] | select(.type=="blob") | .path' \
+    | LC_ALL=C sort > "$WORK/remote.txt"
+  LC_ALL=C comm -23 "$WORK/remote.txt" "$WORK/files.txt" > "$WORK/deleted.txt"
+  DELETED=$(grep -c . "$WORK/deleted.txt" || true)
+  if [ "$DELETED" -gt 0 ]; then
+    say "Removing $DELETED files that no longer exist locally"
+    sed 's/^/  - /' "$WORK/deleted.txt"
+    DEL_JSON=$(jq -nR '[inputs | select(length > 0) | {path: ., mode: "100644", type: "blob", sha: null}]' < "$WORK/deleted.txt")
+    TREE_JSON=$(jq -n --argjson a "$TREE_JSON" --argjson b "$DEL_JSON" '$a + $b')
+  fi
   TREE_SHA=$(jq -n --argjson t "$TREE_JSON" --arg base "$BASE_TREE" '{base_tree: $base, tree: $t}' \
              | gh api -X POST "repos/$OWNER/$REPO/git/trees" --input - --jq .sha)
 fi

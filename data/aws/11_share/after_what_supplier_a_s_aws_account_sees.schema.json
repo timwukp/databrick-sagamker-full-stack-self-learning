@@ -1,0 +1,36 @@
+{
+  "name": "What supplier A's AWS account sees (resource link to the shared table)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "business_date",
+      "type": "date",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "store_id",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "sku",
+      "type": "string",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "units",
+      "type": "bigint",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "is_promo",
+      "type": "boolean",
+      "tag": null,
+      "note": null
+    }
+  ]
+}
