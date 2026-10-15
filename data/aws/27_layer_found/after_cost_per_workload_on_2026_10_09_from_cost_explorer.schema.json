@@ -1,0 +1,24 @@
+{
+  "name": "Cost per workload on 2026-10-09, from Cost Explorer (grouped by the workload tag)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "usage_date",
+      "type": "date",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "workload",
+      "type": "string",
+      "tag": null,
+      "note": "cost allocation tag"
+    },
+    {
+      "name": "unblended_cost_usd",
+      "type": "decimal(12,2)",
+      "tag": null,
+      "note": "Glue, EMR, SageMaker AI, Athena, Flink…"
+    }
+  ]
+}

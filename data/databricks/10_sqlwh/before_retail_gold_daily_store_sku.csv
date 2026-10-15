@@ -1,0 +1,5 @@
+business_date,store_id,sku,units,net_revenue,currency,txn_count,is_promo
+2026-10-09,SG-ORCH-001,SKU-20871,186,1026.72,SGD,141,true
+2026-10-09,SG-ORCH-001,SKU-10023,64,252.80,SGD,60,false
+2026-10-09,MY-KUL-014,SKU-20871,233,1398.00,MYR,170,true
+2026-10-09,TH-BKK-007,SKU-31045,21,6069.00,THB,21,false

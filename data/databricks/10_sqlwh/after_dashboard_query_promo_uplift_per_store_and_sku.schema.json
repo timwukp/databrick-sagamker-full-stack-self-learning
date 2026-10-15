@@ -1,0 +1,42 @@
+{
+  "name": "Dashboard query: promo uplift per store and SKU (run on a SQL warehouse)",
+  "kind": "table",
+  "columns": [
+    {
+      "name": "store_id",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "sku",
+      "type": "STRING",
+      "tag": null,
+      "note": null
+    },
+    {
+      "name": "units_today",
+      "type": "BIGINT",
+      "tag": null,
+      "note": "gold.daily_store_sku.units"
+    },
+    {
+      "name": "units_same_day_last_week",
+      "type": "INT",
+      "tag": null,
+      "note": "feature table: units_lag_7"
+    },
+    {
+      "name": "uplift_pct",
+      "type": "DOUBLE",
+      "tag": null,
+      "note": "(today − last week) ÷ last week × 100"
+    },
+    {
+      "name": "is_promo",
+      "type": "BOOLEAN",
+      "tag": null,
+      "note": null
+    }
+  ]
+}

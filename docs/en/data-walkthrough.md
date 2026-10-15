@@ -16,21 +16,24 @@ Legend for row notes: duplicate, fails check, late, schema change, changed, look
 7. [Raw (bronze): Bronze streaming tables](#step-7)
 8. [Clean (silver): Silver: Lakeflow Spark Declarative Pipelines](#step-8)
 9. [Curated (gold): Gold materialized views](#step-9)
-10. [Features: Feature Store in Unity Catalog](#step-10)
-11. [Raw (bronze): Structured Streaming, real-time mode](#step-11)
-12. [Features: Online Feature Store](#step-12)
-13. [Train and register: Many-models training](#step-13)
-14. [Train and register: MLflow 3, managed](#step-14)
-15. [Train and register: Models in Unity Catalog](#step-15)
-16. [Serve: Batch inference job](#step-16)
-17. [Use: Warehouse inventory forecast](#step-17)
-18. [Serve: Model Serving endpoint](#step-18)
-19. [Use: Store sales forecast](#step-19)
-20. [Serve: Data quality monitoring](#step-20)
-21. [Use: Genie + Agent Bricks](#step-21)
-22. [Layer: Governance](#step-22)
-23. [Layer: Storage](#step-23)
-24. [Layer: Where people work and how jobs run](#step-24)
+10. [Curated (gold): Databricks SQL warehouse](#step-10)
+11. [Curated (gold): OpenSharing (formerly Delta Sharing)](#step-11)
+12. [Features: Feature Store in Unity Catalog](#step-12)
+13. [Raw (bronze): Structured Streaming, real-time mode](#step-13)
+14. [Features: Online Feature Store](#step-14)
+15. [Train and register: Many-models training](#step-15)
+16. [Train and register: MLflow 3, managed](#step-16)
+17. [Train and register: Models in Unity Catalog](#step-17)
+18. [Serve: Batch inference job](#step-18)
+19. [Use: Warehouse inventory forecast](#step-19)
+20. [Serve: Model Serving endpoint](#step-20)
+21. [Use: Store sales forecast](#step-21)
+22. [Serve: Data quality monitoring](#step-22)
+23. [Use: Genie + Agent Bricks](#step-23)
+24. [Layer: Governance](#step-24)
+25. [Layer: Storage](#step-25)
+26. [Layer: Where people work and how jobs run](#step-26)
+27. [Layer: Foundation: identity, security, cost, CI/CD](#step-27)
 
 <a id="step-1"></a>
 ## 1. Sources: Store POS terminals
@@ -800,7 +803,7 @@ Continuously capture changes from the ERP database (CDC) instead of a full table
 
 #### What this step changed
 
-SCD type 2 means every change keeps a version, with __START_AT / __END_AT marking the valid period. Old versions are 'closed' rather than overwritten, so you can answer 'what was the stock at 10 pm last night', which is exactly the history model training needs. Database-based ERPs can use a Lakeflow Connect database connector; for SAP, Delta Sharing through SAP Business Data Cloud is also common in practice, depending on the customer's SAP version.
+SCD type 2 means every change keeps a version, with __START_AT / __END_AT marking the valid period. Old versions are 'closed' rather than overwritten, so you can answer 'what was the stock at 10 pm last night', which is exactly the history model training needs. Database-based ERPs can use a Lakeflow Connect database connector; for SAP, OpenSharing (formerly Delta Sharing) through SAP Business Data Cloud is also common in practice, depending on the customer's SAP version.
 
 #### Code (SQL (Lakeflow pipeline, from a change feed))
 
@@ -1409,7 +1412,299 @@ WHEN NOT MATCHED THEN INSERT (business_date, store_id, sku, units, …)
 [Open this step in the 3D lab](../../en/lab/retail-3d.html#step=gold&plat=aws)
 
 <a id="step-10"></a>
-## 10. Features: Feature Store in Unity Catalog
+## 10. Curated (gold): Databricks SQL warehouse
+
+### On Databricks: Curated (gold): Databricks SQL warehouse
+
+BI and Genie do not read files directly: a SQL engine queries the gold tables, with the governance layer's permissions applied. The question here: how much did the promotion lift sales, and where?
+
+#### Before
+
+**retail.gold.daily_store_sku (materialized view)**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `business_date` | DATE |  |  |
+| `store_id` | STRING |  |  |
+| `sku` | STRING |  |  |
+| `units` | BIGINT |  |  |
+| `net_revenue` | DECIMAL(14,2) |  |  |
+| `currency` | STRING |  |  |
+| `txn_count` | BIGINT |  |  |
+| `is_promo` | BOOLEAN |  | joined from the promo calendar |
+
+| row note | business_date | store_id | sku | units | net_revenue | currency | txn_count | is_promo |
+|---|---|---|---|---|---|---|---|---|
+| hl: includes E1's 2 units plus the rest of the day | 2026-10-09 | SG-ORCH-001 | SKU-20871 | 186 | 1026.72 | SGD | 141 | true |
+|  | 2026-10-09 | SG-ORCH-001 | SKU-10023 | 64 | 252.80 | SGD | 60 | false |
+|  | 2026-10-09 | MY-KUL-014 | SKU-20871 | 233 | 1398.00 | MYR | 170 | true |
+|  | 2026-10-09 | TH-BKK-007 | SKU-31045 | 21 | 6069.00 | THB | 21 | false |
+
+_Full-day totals. The four silver rows above are part of these numbers (for example E1 contributes 2 of the 186 units)._
+
+#### After
+
+**Dashboard query: promo uplift per store and SKU (run on a SQL warehouse)**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `store_id` | STRING |  |  |
+| `sku` | STRING |  |  |
+| `units_today` | BIGINT |  | gold.daily_store_sku.units |
+| `units_same_day_last_week` | INT |  | feature table: units_lag_7 |
+| `uplift_pct` | DOUBLE |  | (today − last week) ÷ last week × 100 |
+| `is_promo` | BOOLEAN |  |  |
+
+| row note | store_id | sku | units_today | units_same_day_last_week | uplift_pct | is_promo |
+|---|---|---|---|---|---|---|
+| hl: the promo roughly doubles units; the agent quotes 92 → 186 later | SG-ORCH-001 | SKU-20871 | 186 | 92 | 102.2 | true |
+|  | MY-KUL-014 | SKU-20871 | 233 | 118 | 97.5 | true |
+|  | TH-BKK-007 | SKU-31045 | 21 | 19 | 10.5 | false |
+|  | SG-ORCH-001 | SKU-10023 | 64 | 61 | 4.9 | false |
+
+_Same numbers a planner sees in an AI/BI dashboard, in Genie, or in Power BI connected to the same warehouse._
+
+#### What this step changed
+
+A SQL warehouse is compute built for SQL and BI: serverless, it stops when idle, and Photon is the default engine. Whether the query comes from an AI/BI dashboard, Genie or Power BI, Unity Catalog row filters and column masks apply (see the governance layer), so a Thailand planner still sees only TH. Every query is recorded in system tables, so you can audit who queried what.
+
+#### Code (SQL (Databricks SQL warehouse))
+
+```
+SELECT g.store_id, g.sku,
+       g.units                                                   AS units_today,
+       f.units_lag_7                                             AS units_same_day_last_week,
+       ROUND(100.0 * (g.units - f.units_lag_7) / f.units_lag_7, 1) AS uplift_pct,
+       g.is_promo
+FROM retail.gold.daily_store_sku g
+JOIN retail.features.store_sku_daily f USING (store_id, sku, business_date)
+WHERE g.business_date = DATE'2026-10-09'
+ORDER BY uplift_pct DESC;
+```
+
+[Open this step in the 3D lab](../../en/lab/retail-3d.html#step=sqlwh&plat=dbx)
+
+### On AWS: Curated (gold): Amazon Athena or Redshift Serverless
+
+BI and Genie do not read files directly: a SQL engine queries the gold tables, with the governance layer's permissions applied. The question here: how much did the promotion lift sales, and where?
+
+#### Before
+
+**s3tablescatalog/retail-lake.gold.daily_store_sku (Iceberg, refreshed by a scheduled job)**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `business_date` | date |  |  |
+| `store_id` | string |  |  |
+| `sku` | string |  |  |
+| `units` | long |  |  |
+| `net_revenue` | decimal(14,2) |  |  |
+| `currency` | string |  |  |
+| `txn_count` | long |  |  |
+| `is_promo` | boolean |  | joined from the promo calendar |
+
+| row note | business_date | store_id | sku | units | net_revenue | currency | txn_count | is_promo |
+|---|---|---|---|---|---|---|---|---|
+| hl: includes E1's 2 units plus the rest of the day | 2026-10-09 | SG-ORCH-001 | SKU-20871 | 186 | 1026.72 | SGD | 141 | true |
+|  | 2026-10-09 | SG-ORCH-001 | SKU-10023 | 64 | 252.80 | SGD | 60 | false |
+|  | 2026-10-09 | MY-KUL-014 | SKU-20871 | 233 | 1398.00 | MYR | 170 | true |
+|  | 2026-10-09 | TH-BKK-007 | SKU-31045 | 21 | 6069.00 | THB | 21 | false |
+
+_Full-day totals. The four silver rows above are part of these numbers (for example E1 contributes 2 of the 186 units)._
+
+#### After
+
+**Dashboard query: promo uplift per store and SKU (Athena)**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `store_id` | string |  |  |
+| `sku` | string |  |  |
+| `units_today` | bigint |  |  |
+| `units_same_day_last_week` | bigint |  | offline feature store: units_lag_7 |
+| `uplift_pct` | double |  |  |
+| `is_promo` | boolean |  |  |
+
+| row note | store_id | sku | units_today | units_same_day_last_week | uplift_pct | is_promo |
+|---|---|---|---|---|---|---|
+| hl: same answer, different engine | SG-ORCH-001 | SKU-20871 | 186 | 92 | 102.2 | true |
+|  | MY-KUL-014 | SKU-20871 | 233 | 118 | 97.5 | true |
+|  | TH-BKK-007 | SKU-31045 | 21 | 19 | 10.5 | false |
+|  | SG-ORCH-001 | SKU-10023 | 64 | 61 | 4.9 | false |
+
+#### What this step changed
+
+Athena runs the same SQL directly on the Iceberg tables and charges by data scanned; high-concurrency dashboards usually move to Redshift Serverless. Lake Formation data cells filters still apply. The difference is the other side of the join: on AWS the features sit in the SageMaker Feature Store offline store (a table in Glue), keyed by the combined store_sku, and it keeps every write, so the query has to pick the latest record itself.
+
+#### Code (SQL (Athena))
+
+```
+SELECT g.store_id, g.sku, g.units AS units_today,
+       f.units_lag_7 AS units_same_day_last_week,
+       ROUND(100.0 * (g.units - f.units_lag_7) / f.units_lag_7, 1) AS uplift_pct,
+       g.is_promo
+FROM gold.daily_store_sku g
+JOIN "sagemaker_featurestore"."store_sku_daily_1728461102" f
+  ON f.store_sku = g.store_id || '#' || g.sku
+ AND f.is_deleted = false
+WHERE g.business_date = DATE '2026-10-09'
+ORDER BY uplift_pct DESC;
+```
+
+[Open this step in the 3D lab](../../en/lab/retail-3d.html#step=sqlwh&plat=aws)
+
+<a id="step-11"></a>
+## 11. Curated (gold): OpenSharing (formerly Delta Sharing)
+
+### On Databricks: Curated (gold): OpenSharing (formerly Delta Sharing)
+
+Share sell-through with a supplier: they query a live table instead of receiving a CSV every day. Supplier A should see only its own SKU, and no revenue.
+
+#### Before
+
+**retail.gold.daily_store_sku (materialized view)**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `business_date` | DATE |  |  |
+| `store_id` | STRING |  |  |
+| `sku` | STRING |  |  |
+| `units` | BIGINT |  |  |
+| `net_revenue` | DECIMAL(14,2) |  |  |
+| `currency` | STRING |  |  |
+| `txn_count` | BIGINT |  |  |
+| `is_promo` | BOOLEAN |  | joined from the promo calendar |
+
+| row note | business_date | store_id | sku | units | net_revenue | currency | txn_count | is_promo |
+|---|---|---|---|---|---|---|---|---|
+| hl: includes E1's 2 units plus the rest of the day | 2026-10-09 | SG-ORCH-001 | SKU-20871 | 186 | 1026.72 | SGD | 141 | true |
+|  | 2026-10-09 | SG-ORCH-001 | SKU-10023 | 64 | 252.80 | SGD | 60 | false |
+|  | 2026-10-09 | MY-KUL-014 | SKU-20871 | 233 | 1398.00 | MYR | 170 | true |
+|  | 2026-10-09 | TH-BKK-007 | SKU-31045 | 21 | 6069.00 | THB | 21 | false |
+
+_Full-day totals. The four silver rows above are part of these numbers (for example E1 contributes 2 of the 186 units)._
+
+#### After
+
+**What supplier A sees: retail.share.daily_sku_supplier_a (shared view)**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `business_date` | DATE |  |  |
+| `store_id` | STRING |  |  |
+| `sku` | STRING |  |  |
+| `units` | BIGINT |  |  |
+| `is_promo` | BOOLEAN |  |  |
+
+| row note | business_date | store_id | sku | units | is_promo |
+|---|---|---|---|---|---|
+| hl: only SKU-20871; net_revenue, currency and txn_count are not shared | 2026-10-09 | SG-ORCH-001 | SKU-20871 | 186 | true |
+|  | 2026-10-09 | MY-KUL-014 | SKU-20871 | 233 | true |
+
+**Share objects in Unity Catalog**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `object` | STRING |  |  |
+| `name` | STRING |  |  |
+| `detail` | STRING |  |  |
+
+| object | name | detail |
+|---|---|---|
+| share | supplier_a | view retail.share.daily_sku_supplier_a |
+| recipient | supplier_a_team | open sharing: activation link, no Databricks account needed |
+| grant | SELECT ON SHARE supplier_a | to recipient supplier_a_team; revoke to stop sharing |
+
+#### What this step changed
+
+OpenSharing shares tables or views from Unity Catalog. Here a view keeps only the supplier's SKU and drops the revenue columns, and the view is added to a share. The supplier always reads the latest version, with no daily exports; to stop, revoke the recipient. If the supplier also uses Databricks, the table appears directly in its own Unity Catalog.
+
+#### Code (SQL (Unity Catalog, OpenSharing))
+
+```
+CREATE VIEW retail.share.daily_sku_supplier_a AS
+SELECT business_date, store_id, sku, units, is_promo
+FROM retail.gold.daily_store_sku
+WHERE sku = 'SKU-20871';
+
+CREATE SHARE supplier_a;
+ALTER SHARE supplier_a ADD VIEW retail.share.daily_sku_supplier_a;
+CREATE RECIPIENT supplier_a_team;          -- open sharing: returns an activation link
+GRANT SELECT ON SHARE supplier_a TO RECIPIENT supplier_a_team;
+```
+
+[Open this step in the 3D lab](../../en/lab/retail-3d.html#step=share&plat=dbx)
+
+### On AWS: Curated (gold): Lake Formation cross-account sharing
+
+Share sell-through with a supplier: they query a live table instead of receiving a CSV every day. Supplier A should see only its own SKU, and no revenue.
+
+#### Before
+
+**s3tablescatalog/retail-lake.gold.daily_store_sku (Iceberg, refreshed by a scheduled job)**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `business_date` | date |  |  |
+| `store_id` | string |  |  |
+| `sku` | string |  |  |
+| `units` | long |  |  |
+| `net_revenue` | decimal(14,2) |  |  |
+| `currency` | string |  |  |
+| `txn_count` | long |  |  |
+| `is_promo` | boolean |  | joined from the promo calendar |
+
+| row note | business_date | store_id | sku | units | net_revenue | currency | txn_count | is_promo |
+|---|---|---|---|---|---|---|---|---|
+| hl: includes E1's 2 units plus the rest of the day | 2026-10-09 | SG-ORCH-001 | SKU-20871 | 186 | 1026.72 | SGD | 141 | true |
+|  | 2026-10-09 | SG-ORCH-001 | SKU-10023 | 64 | 252.80 | SGD | 60 | false |
+|  | 2026-10-09 | MY-KUL-014 | SKU-20871 | 233 | 1398.00 | MYR | 170 | true |
+|  | 2026-10-09 | TH-BKK-007 | SKU-31045 | 21 | 6069.00 | THB | 21 | false |
+
+_Full-day totals. The four silver rows above are part of these numbers (for example E1 contributes 2 of the 186 units)._
+
+#### After
+
+**What supplier A's AWS account sees (resource link to the shared table)**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `business_date` | date |  |  |
+| `store_id` | string |  |  |
+| `sku` | string |  |  |
+| `units` | bigint |  |  |
+| `is_promo` | boolean |  |  |
+
+| row note | business_date | store_id | sku | units | is_promo |
+|---|---|---|---|---|---|
+| hl: data cells filter: SKU-20871 rows, revenue columns excluded | 2026-10-09 | SG-ORCH-001 | SKU-20871 | 186 | true |
+|  | 2026-10-09 | MY-KUL-014 | SKU-20871 | 233 | true |
+
+#### What this step changed
+
+Lake Formation can grant a table or a data cells filter to another AWS account, delivered through AWS RAM; the supplier creates a resource link and queries it with Athena. This assumes the supplier is on AWS, and both sides manage cross-account permissions. Suppliers outside AWS need another route, such as scheduled file exports.
+
+#### Code (Python (boto3, Lake Formation))
+
+```
+lf.create_data_cells_filter(TableData={
+    "TableCatalogId": ACCOUNT_ID, "DatabaseName": "gold",
+    "TableName": "daily_store_sku", "Name": "supplier_a",
+    "RowFilter": {"FilterExpression": "sku = 'SKU-20871'"},
+    "ColumnNames": ["business_date", "store_id", "sku", "units", "is_promo"]})
+
+lf.grant_permissions(
+    Principal={"DataLakePrincipalIdentifier": SUPPLIER_ACCOUNT_ID},
+    Resource={"DataCellsFilter": {"TableCatalogId": ACCOUNT_ID, "DatabaseName": "gold",
+                                  "TableName": "daily_store_sku", "Name": "supplier_a"}},
+    Permissions=["SELECT"])
+# the supplier accepts the AWS RAM invitation, then creates a resource link for Athena
+```
+
+[Open this step in the 3D lab](../../en/lab/retail-3d.html#step=share&plat=aws)
+
+<a id="step-12"></a>
+## 12. Features: Feature Store in Unity Catalog
 
 ### On Databricks: Features: Feature Store in Unity Catalog
 
@@ -1553,8 +1848,8 @@ fg.create(
 
 [Open this step in the 3D lab](../../en/lab/retail-3d.html#step=fs_off&plat=aws)
 
-<a id="step-11"></a>
-## 11. Raw (bronze): Structured Streaming, real-time mode
+<a id="step-13"></a>
+## 13. Raw (bronze): Structured Streaming, real-time mode
 
 ### On Databricks: Raw (bronze): Structured Streaming, real-time mode
 
@@ -1668,8 +1963,8 @@ GROUP BY store_id, sku, window_start, window_end;
 
 [Open this step in the 3D lab](../../en/lab/retail-3d.html#step=rtc&plat=aws)
 
-<a id="step-12"></a>
-## 12. Features: Online Feature Store
+<a id="step-14"></a>
+## 14. Features: Online Feature Store
 
 ### On Databricks: Features: Online Feature Store
 
@@ -1809,8 +2104,8 @@ rec = fs.get_record(
 
 [Open this step in the 3D lab](../../en/lab/retail-3d.html#step=fs_on&plat=aws)
 
-<a id="step-13"></a>
-## 13. Train and register: Many-models training
+<a id="step-15"></a>
+## 15. Train and register: Many-models training
 
 ### On Databricks: Train and register: Many-models training
 
@@ -1947,8 +2242,8 @@ est.fit({"train": "s3://retail-ml/train/2026-10-09/"})
 
 [Open this step in the 3D lab](../../en/lab/retail-3d.html#step=train&plat=aws)
 
-<a id="step-14"></a>
-## 14. Train and register: MLflow 3, managed
+<a id="step-16"></a>
+## 16. Train and register: MLflow 3, managed
 
 ### On Databricks: Train and register: MLflow 3, managed
 
@@ -2085,8 +2380,8 @@ mlflow.set_experiment("retail-demand")
 
 [Open this step in the 3D lab](../../en/lab/retail-3d.html#step=mlflow&plat=aws)
 
-<a id="step-15"></a>
-## 15. Train and register: Models in Unity Catalog
+<a id="step-17"></a>
+## 17. Train and register: Models in Unity Catalog
 
 ### On Databricks: Train and register: Models in Unity Catalog
 
@@ -2205,8 +2500,8 @@ sm.update_model_package(
 
 [Open this step in the 3D lab](../../en/lab/retail-3d.html#step=registry&plat=aws)
 
-<a id="step-16"></a>
-## 16. Serve: Batch inference job
+<a id="step-18"></a>
+## 18. Serve: Batch inference job
 
 ### On Databricks: Serve: Batch inference job
 
@@ -2335,8 +2630,8 @@ tf.transform("s3://retail-ml/batch-in/2026-10-09/", content_type="text/csv",
 
 [Open this step in the 3D lab](../../en/lab/retail-3d.html#step=batch&plat=aws)
 
-<a id="step-17"></a>
-## 17. Use: Warehouse inventory forecast
+<a id="step-19"></a>
+## 19. Use: Warehouse inventory forecast
 
 ### On Databricks: Use: Warehouse inventory forecast
 
@@ -2451,8 +2746,8 @@ GROUP BY f.dc_id, f.sku, s.on_hand_eod, s.open_po_qty;
 
 [Open this step in the 3D lab](../../en/lab/retail-3d.html#step=inv&plat=aws)
 
-<a id="step-18"></a>
-## 18. Serve: Model Serving endpoint
+<a id="step-20"></a>
+## 20. Serve: Model Serving endpoint
 
 ### On Databricks: Serve: Model Serving endpoint
 
@@ -2583,8 +2878,8 @@ resp = rt.invoke_endpoint(EndpointName="demand-forecaster",
 
 [Open this step in the 3D lab](../../en/lab/retail-3d.html#step=rt&plat=aws)
 
-<a id="step-19"></a>
-## 19. Use: Store sales forecast
+<a id="step-21"></a>
+## 21. Use: Store sales forecast
 
 ### On Databricks: Use: Store sales forecast
 
@@ -2672,8 +2967,8 @@ On AWS this app is usually API Gateway + Lambda calling the endpoint, with the f
 
 [Open this step in the 3D lab](../../en/lab/retail-3d.html#step=sales&plat=aws)
 
-<a id="step-20"></a>
-## 20. Serve: Data quality monitoring
+<a id="step-22"></a>
+## 22. Serve: Data quality monitoring
 
 ### On Databricks: Serve: Data quality monitoring
 
@@ -2833,8 +3128,8 @@ predictor = model.deploy(
 
 [Open this step in the 3D lab](../../en/lab/retail-3d.html#step=monitor&plat=aws)
 
-<a id="step-21"></a>
-## 21. Use: Genie + Agent Bricks
+<a id="step-23"></a>
+## 23. Use: Genie + Agent Bricks
 
 ### On Databricks: Use: Genie + Agent Bricks
 
@@ -2959,8 +3254,8 @@ def invoke(payload):
 
 [Open this step in the 3D lab](../../en/lab/retail-3d.html#step=genai&plat=aws)
 
-<a id="step-22"></a>
-## 22. Layer: Governance
+<a id="step-24"></a>
+## 24. Layer: Governance
 
 ### On Databricks: Layer: Governance
 
@@ -3092,8 +3387,8 @@ lf.create_data_cells_filter(TableData={
 
 [Open this step in the 3D lab](../../en/lab/retail-3d.html#step=p:gov&plat=aws)
 
-<a id="step-23"></a>
-## 23. Layer: Storage
+<a id="step-25"></a>
+## 25. Layer: Storage
 
 ### On Databricks: Layer: Storage
 
@@ -3151,8 +3446,8 @@ Iceberg records versions in a tree: metadata.json → manifest list → manifest
 
 [Open this step in the 3D lab](../../en/lab/retail-3d.html#step=p:store&plat=aws)
 
-<a id="step-24"></a>
-## 24. Layer: Where people work and how jobs run
+<a id="step-26"></a>
+## 26. Layer: Where people work and how jobs run
 
 ### On Databricks: Layer: Where people work and how jobs run
 
@@ -3223,3 +3518,116 @@ _No input: this is where the data starts (a customer system outside the platform
 The ML part uses SageMaker Pipelines; the data part is usually Glue workflows, Step Functions or MWAA. The two schedulers have to trigger each other (for example through EventBridge). This is an integration cost to state clearly.
 
 [Open this step in the 3D lab](../../en/lab/retail-3d.html#step=p:ws&plat=aws)
+
+<a id="step-27"></a>
+## 27. Layer: Foundation: identity, security, cost, CI/CD
+
+### On Databricks: Layer: Foundation: identity, security, cost, CI/CD
+
+The bottom layer: identity, keys, audit, cost and deployment. The question here: what did each workload cost yesterday?
+
+#### Before
+
+_No input: this is where the data starts (a customer system outside the platform)._
+
+#### After
+
+**Cost per workload on 2026-10-09, from system.billing.usage**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `usage_date` | DATE |  |  |
+| `workload` | STRING |  | custom_tags['workload'], set on every job, pipeline, warehouse and endpoint |
+| `dbus` | DECIMAL(38,2) |  | SUM(usage_quantity) where usage_unit = 'DBU' |
+
+| row note | usage_date | workload | dbus |
+|---|---|---|---|
+| hl: many-models training is the biggest line | 2026-10-09 | nightly_training | 118.2 |
+|  | 2026-10-09 | store_endpoint | 61.3 |
+|  | 2026-10-09 | ingest_pipeline | 42.5 |
+|  | 2026-10-09 | bi_warehouse | 37.9 |
+|  | 2026-10-09 | batch_scoring | 23.75 |
+
+_Synthetic values. Multiply DBUs by your contract price for cost; the S3, KMS and network charges stay on the AWS bill._
+
+**databricks.yml (Declarative Automation Bundles)**
+
+```text
+bundle:
+  name: retail-forecast
+
+resources:
+  jobs:
+    retail_nightly:
+      name: retail_nightly
+      tags: {workload: nightly_training}
+      tasks:
+        - task_key: train
+          notebook_task: {notebook_path: ./src/train_many_models.py}
+
+targets:
+  dev:  {mode: development, default: true}
+  prod: {mode: production}
+```
+
+#### What this step changed
+
+On Databricks, cost and audit are tables: system.billing.usage splits usage by custom tag into workloads, and system.access.audit records who changed permissions. Deployment uses Declarative Automation Bundles (formerly Databricks Asset Bundles): jobs, pipelines and endpoints are written as YAML, kept in Git and deployed to dev and prod by CI, with the tags fixed in the same files. Keys (KMS), networking (VPC, private connectivity) and CloudTrail stay in the customer's own AWS account, and this part is shared by both designs.
+
+#### Code (SQL (system tables))
+
+```
+SELECT usage_date,
+       custom_tags['workload'] AS workload,
+       SUM(usage_quantity)     AS dbus
+FROM system.billing.usage
+WHERE usage_date = DATE'2026-10-09' AND usage_unit = 'DBU'
+GROUP BY ALL
+ORDER BY dbus DESC;
+```
+
+[Open this step in the 3D lab](../../en/lab/retail-3d.html#step=p:found&plat=dbx)
+
+### On AWS: Layer: Foundation: identity, security, cost, CI/CD
+
+The bottom layer: identity, keys, audit, cost and deployment. The question here: what did each workload cost yesterday?
+
+#### Before
+
+_No input: this is where the data starts (a customer system outside the platform)._
+
+#### After
+
+**Cost per workload on 2026-10-09, from Cost Explorer (grouped by the workload tag)**
+
+| column | type | tag | note |
+|---|---|---|---|
+| `usage_date` | date |  |  |
+| `workload` | string |  | cost allocation tag |
+| `unblended_cost_usd` | decimal(12,2) |  | Glue, EMR, SageMaker AI, Athena, Flink… |
+
+| row note | usage_date | workload | unblended_cost_usd |
+|---|---|---|---|
+| hl: only adds up if every service was tagged | 2026-10-09 | nightly_training | 96.4 |
+|  | 2026-10-09 | store_endpoint | 52.8 |
+|  | 2026-10-09 | ingest_pipeline | 38.1 |
+|  | 2026-10-09 | bi_queries | 21.6 |
+|  | 2026-10-09 | batch_scoring | 17.25 |
+
+_Synthetic values. Cost Explorer refreshes at least once every 24 hours._
+
+#### What this step changed
+
+On AWS, cost is in Cost Explorer, split by cost allocation tags and refreshed at least once every 24 hours; audit is in CloudTrail; deployment uses CloudFormation or CDK. One pipeline's cost is spread across the Glue, EMR, SageMaker AI, Athena and Flink line items, so agree on a tagging scheme from the start or the numbers will not add up.
+
+#### Code (Python (boto3, Cost Explorer))
+
+```
+ce.get_cost_and_usage(
+    TimePeriod={"Start": "2026-10-09", "End": "2026-10-10"},
+    Granularity="DAILY",
+    Metrics=["UnblendedCost"],
+    GroupBy=[{"Type": "TAG", "Key": "workload"}])
+```
+
+[Open this step in the 3D lab](../../en/lab/retail-3d.html#step=p:found&plat=aws)

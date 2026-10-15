@@ -203,6 +203,33 @@ for plat in ("databricks", "aws"):
 feat_dbx = table("databricks", step_no("fs_off"), "after")
 feat_aws = table("aws", step_no("fs_off"), "after")
 check([f"{r['store_id']}#{r['sku']}" for r in feat_dbx] == [r["store_sku"] for r in feat_aws], "numbers: feature group record ids do not match the feature table keys")
+# SQL warehouse step: promo uplift = gold units vs the feature table's units_lag_7
+gold_units = {(r["store_id"], r["sku"]): int(r["units"]) for r in gold}
+lag7 = {(r["store_id"], r["sku"]): int(r["units_lag_7"]) for r in feat_dbx}
+for plat in ("databricks", "aws"):
+    up = table(plat, step_no("sqlwh"), "after")
+    check(len(up) == len(gold), f"numbers: {plat} uplift query should return one row per gold row")
+    for r in up:
+        k = (r["store_id"], r["sku"])
+        check(int(r["units_today"]) == gold_units.get(k), f"numbers: {plat} uplift units_today disagrees with gold for {k}")
+        check(int(r["units_same_day_last_week"]) == lag7.get(k), f"numbers: {plat} uplift last-week units disagree with the feature table for {k}")
+        want = (D(r["units_today"]) - D(r["units_same_day_last_week"])) * 100 / D(r["units_same_day_last_week"])
+        check(want.quantize(D("0.1")) == D(r["uplift_pct"]), f"numbers: {plat} uplift_pct wrong for {k}")
+    check([D(r["uplift_pct"]) for r in up] == sorted((D(r["uplift_pct"]) for r in up), reverse=True), f"numbers: {plat} uplift rows not ordered by uplift")
+# sharing step: the supplier's view is exactly gold filtered to its SKU, with no revenue
+for plat in ("databricks", "aws"):
+    sh = table(plat, step_no("share"), "after")
+    check(sh and all(r["sku"] == "SKU-20871" for r in sh), f"numbers: {plat} shared view leaks other SKUs")
+    check({(r["store_id"], r["sku"]): int(r["units"]) for r in sh} == {k: v for k, v in gold_units.items() if k[1] == "SKU-20871"},
+          f"numbers: {plat} shared units disagree with gold")
+    check(sh and "net_revenue" not in sh[0], f"numbers: {plat} shared view exposes revenue")
+# foundation step: cost rows sorted, one per workload
+for plat in ("databricks", "aws"):
+    cost = table(plat, step_no("p:found"), "after")
+    col = "dbus" if plat == "databricks" else "unblended_cost_usd"
+    vals = [D(r[col]) for r in cost]
+    check(len(cost) == 5 and vals == sorted(vals, reverse=True), f"numbers: {plat} cost per workload not 5 sorted rows")
+    check(len({r["workload"] for r in cost}) == len(cost), f"numbers: {plat} cost table repeats a workload")
 
 # ---------- wording ----------
 PUBLISHED = PAGES + [str(p.relative_to(ROOT)) for p in (ROOT / "docs").rglob("*.md")] + ["README.md"]
@@ -218,6 +245,12 @@ for zh, en in (("index.html", "en/index.html"), ("lab/retail-3d.html", "en/lab/r
     check('hreflang="zh-Hant"' in read(en), f"links: {en} has no link back to the Chinese page")
 tr = json.loads(read("i18n/en.json"))
 check(all(not CJK.search(v) and '"' not in v for v in tr.values()), "wording: i18n/en.json has Chinese or straight double quotes in a translation")
+# current product names: Delta Sharing is OpenSharing now; only mention the old name next to the new one
+for p in PUBLISHED:
+    text = read(p)
+    for m in re.finditer(r"Delta Sharing", text):
+        ctx = text[max(0, m.start() - 120): m.end() + 120]
+        check("OpenSharing" in ctx or "/delta-sharing" in ctx, f"wording: {p} says Delta Sharing without OpenSharing nearby")
 FORBIDDEN = [r"面試", r"\binterview", r"前東家", r"你的主場", r"\bHM\b", r"hiring manager"]
 for p in PUBLISHED:
     text = read(p)

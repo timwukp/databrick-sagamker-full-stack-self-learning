@@ -47,7 +47,7 @@ canvas:focus-visible{outline:3px solid var(--ink);outline-offset:-3px}
 .viewport.portrait .layers{display:flex}
 .layers button{font:700 13px/1.2 var(--cond);border-radius:4px;padding:6px 9px;cursor:pointer;border:1px solid transparent;color:#fff}
 .layers button.gov.dbx{background:var(--dbx-dark)} .layers button.gov.aws{background:var(--awsink);box-shadow:inset 0 -3px 0 var(--aws)}
-.layers button.store{background:#5B6875} .layers button.ws{background:#fff;color:var(--ink);border:1px dashed rgba(22,33,44,.5)}
+.layers button.store{background:#5B6875} .layers button.found{background:#0F766E} .layers button.ws{background:#fff;color:var(--ink);border:1px dashed rgba(22,33,44,.5)}
 .panel{background:#fff;border:1px solid var(--rule);border-radius:10px;padding:18px 20px 22px;height:clamp(480px,68vh,740px);overflow:auto}
 .panel h2{font:700 24px/1.08 var(--cond);margin:2px 0 8px}
 .panel h3{font:600 14px/1.3 var(--sans);margin:18px 0 6px}
@@ -268,6 +268,8 @@ details.codeb{margin-top:12px} details.codeb summary{cursor:pointer;font:600 14p
       <tr><td>Use SageMaker Model Monitor for monitoring on the AWS side</td><td>Official docs: Model Monitor is closed to new customers (same as Amazon Forecast).</td><td>Data Capture + an open-source monitoring stack (SageMaker AI MLflow Apps + Evidently AI) + CloudWatch + Quick Sight.</td></tr>
       <tr><td>'Zero-ETL vs Auto Loader, a tie'</td><td>Different things: zero-ETL is near real-time replication from operational databases and SaaS (such as SAP, Salesforce); Auto Loader is incremental file ingestion.</td><td>Zero-ETL ↔ Lakeflow Connect; Auto Loader ↔ S3 events + Glue.</td></tr>
       <tr><td>'The two are now fully equivalent, 1:1'</td><td>This amounts to saying the products have no differences, which is also inaccurate (for example, AWS Feature Store and Canvas are still in SageMaker AI Studio).</td><td>Talk about the difference: one governance and lineage system covers models and agent tools; at the same time, fairly acknowledge AWS strengths.</td></tr>
+      <tr><td>Delta Sharing</td><td>Renamed. The official docs now call it OpenSharing (the old /delta-sharing URL redirects to /opensharing).</td><td>OpenSharing (formerly Delta Sharing)</td></tr>
+      <tr><td>‘Use Lakehouse Federation to bring the ERP data in’</td><td>Federation queries the source in place, read-only, without copying. It is not an ingestion tool and keeps no history.</td><td>Lakehouse Federation for occasional queries; Lakeflow Connect for volume, low latency or SCD type 2 history.</td></tr>
       <tr><td>'UC finds the failing upstream in one second'</td><td>Overstated.</td><td>'Lineage can trace from the endpoint all the way back to the POS table.'</td></tr>
     </tbody>
   </table>
@@ -275,7 +277,7 @@ details.codeb{margin-top:12px} details.codeb summary{cursor:pointer;font:600 14p
 
 <section class="block" id="sources">
   <h2>Checked against</h2>
-  <p class="sub">Official documentation opened and checked page by page on 2026-10-10 (Databricks doc pages show update dates of September to October 2026).</p>
+  <p class="sub">Official documentation opened and checked page by page on 2026-10-10 (the Databricks pages show last-updated dates in September and October 2026). SQL warehouses, OpenSharing, federation and the foundation layer were checked on 2026-10-15.</p>
   <ul class="srcs" id="srcList"></ul>
   <p class="sub" style="margin-top:14px">Not opened page by page today, but standard official URLs or linked directly from the official pages above: MSK, Managed Flink, SageMaker Feature Store, Model Registry, real-time endpoints, Batch Transform, Model Monitor, SageMaker Pipelines, API Gateway, IAM, Lake Formation, Glue, SageMaker Catalog, Structured Streaming real-time mode, Online Feature Store, Unity Catalog overview, Kafka docs.</p>
 </section>
@@ -348,7 +350,21 @@ const D = {
   pipelines:"https://docs.aws.amazon.com/sagemaker/latest/dg/pipelines.html",
   smcat:"https://docs.aws.amazon.com/sagemaker-unified-studio/latest/userguide/working-with-business-catalog.html",
   lf:"https://docs.aws.amazon.com/lake-formation/latest/dg/what-is-lake-formation.html",
-  iam:"https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html"
+  iam:"https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html",
+  sqlwh:"https://docs.databricks.com/aws/en/compute/sql-warehouse/",
+  photon:"https://docs.databricks.com/aws/en/compute/photon",
+  share:"https://docs.databricks.com/aws/en/opensharing/",
+  fed:"https://docs.databricks.com/aws/en/query-federation/",
+  catfed:"https://docs.databricks.com/aws/en/query-federation/catalog-federation",
+  systables:"https://docs.databricks.com/aws/en/admin/system-tables/",
+  bundles:"https://docs.databricks.com/aws/en/dev-tools/bundles/",
+  dbxsec:"https://docs.databricks.com/aws/en/security/",
+  scim:"https://docs.databricks.com/aws/en/admin/users-groups/scim/",
+  athena:"https://docs.aws.amazon.com/athena/latest/ug/what-is.html",
+  redshift:"https://docs.aws.amazon.com/redshift/latest/mgmt/welcome.html",
+  lfShare:"https://docs.aws.amazon.com/lake-formation/latest/dg/cross-account-permissions.html",
+  idc:"https://docs.aws.amazon.com/singlesignon/latest/userguide/what-is.html",
+  costexp:"https://docs.aws.amazon.com/cost-management/latest/userguide/ce-what-is.html"
 };
 
 const OWN = {
@@ -388,9 +404,9 @@ const NODES = [
   aws:{t:"S3 landing + AWS Glue jobs",k:"Glue job bookmarks skip old files",d:"Files land in an S3 prefix. Glue jobs pick up only new files using job bookmarks, on a schedule or triggered by S3 events through EventBridge.",o:"aws",doc:D.glue},
   n:"Auto Loader only ingests 'files'; it does not read Kafka. AWS has no one-to-one service; it is usually assembled from S3 events + Glue bookmarks."},
  {id:"cdc",s:1,l:1,h:22,
-  dbx:{t:"Lakeflow Connect",k:"Managed connectors and database CDC",d:"Managed ingestion from databases and SaaS apps into streaming tables, with change data capture. Part of Lakeflow, next to pipelines and jobs.",o:"dbx",doc:D.lfconnect},
+  dbx:{t:"Lakeflow Connect",k:"Managed connectors and database CDC",d:"Managed ingestion from databases and SaaS apps into streaming tables, with change data capture. Part of Lakeflow, next to pipelines and jobs. For an occasional read-only query on the source without copying it, Lakehouse Federation queries the database in place instead.",o:"dbx",doc:D.lfconnect},
   aws:{t:"Zero-ETL or AWS DMS",k:"Near real-time replication from ERP",d:"Zero-ETL integrations bring operational databases and apps such as SAP and Salesforce into the lakehouse in near real time. AWS DMS covers other change-data-capture sources.",o:"aws",doc:D.zeroetl},
-  n:"Zero-ETL maps to Lakeflow Connect (CDC), not Auto Loader. Which ERP connectors are supported depends on the customer's version; confirm it rather than promising on the spot."},
+  n:"Zero-ETL maps to Lakeflow Connect (CDC), not to Auto Loader. Which ERP connectors are supported depends on the customer's versions, so check rather than promise on the spot. Another option is Lakehouse Federation: it queries the source database in place, read-only and without copying, which suits the occasional query. For high volume, low latency or keeping history (SCD type 2), the docs recommend Lakeflow Connect."},
 
  {id:"rtc",s:2,l:-1,h:22,
   dbx:{t:"Structured Streaming, real-time mode",k:"Rolling sales features to the online store",d:"Computes rolling features, such as units sold in the last 15 minutes per store and SKU, and writes them directly to the Online Feature Store through Stream Feature Views.",o:"dbx",doc:D.rtmode},
@@ -408,6 +424,14 @@ const NODES = [
   dbx:{t:"Gold materialized views",k:"Daily sales and stock per store, DC, SKU",d:"Business-level tables: daily sales per store and SKU, stock position per warehouse and SKU. One source for dashboards and models, so the numbers agree.",o:"dbx",doc:D.ldp},
   aws:{t:"Curated Iceberg tables",k:"Queried by Athena or Redshift",d:"Curated tables in the SageMaker lakehouse architecture, registered in the Glue Data Catalog and queried by Athena or Redshift.",o:"aws",doc:D.lakehouse},
   n:"One gold layer feeds both BI and ML, so the numbers on both sides stay consistent."},
+ {id:"sqlwh",s:4,l:-1,h:22,
+  dbx:{t:"Databricks SQL warehouse",k:"Serverless SQL with Photon, for BI and Genie",d:"Serverless compute for SQL on the gold tables. Photon, the native vectorized engine, is the default on every SQL warehouse. AI/BI dashboards and Genie run on it, and tools such as Power BI, Tableau or Amazon Quick connect to it, with Unity Catalog permissions applied to every query.",o:"dbx",doc:D.sqlwh},
+  aws:{t:"Amazon Athena or Redshift Serverless",k:"SQL on the Iceberg tables, for BI",d:"Athena runs serverless SQL directly on the Iceberg tables. Redshift Serverless is the warehouse option for heavier, high-concurrency dashboards. Quick Sight and other BI tools connect to either, with Lake Formation permissions applied.",o:"aws",doc:D.athena},
+  n:"In the reference architecture, serving is not only models: BI needs a SQL engine too. On Databricks that is a SQL warehouse (Photon by default); on AWS, Athena or Redshift. The pricing model and the expected concurrency are the design questions to ask first."},
+ {id:"share",s:4,l:1,h:22,
+  dbx:{t:"OpenSharing (formerly Delta Sharing)",k:"Share live gold tables with suppliers",d:"Share live gold tables or views, such as daily sell-through per SKU, with suppliers. Recipients on Databricks see them in their own Unity Catalog; recipients without Databricks read them through the open protocol. No extract files and no copies to keep in sync.",o:"dbx",doc:D.share},
+  aws:{t:"Lake Formation cross-account sharing",k:"Grant tables to another AWS account via AWS RAM",d:"Grant Lake Formation permissions on a table or a data cells filter to another AWS account; AWS RAM delivers the share. The supplier needs an AWS account and creates a resource link to query it with Athena. Suppliers outside AWS need another route, such as exports.",o:"aws",doc:D.lfShare},
+  n:"The Delta Sharing in the reference architecture is now called OpenSharing. A common retail use: share sell-through and stock with suppliers (vendor-managed inventory, collaborative replenishment). The key difference is whether the other side must be on the same platform: an OpenSharing recipient does not need Databricks, while Lake Formation sharing needs the supplier to have an AWS account."},
 
  {id:"fs_on",s:5,l:-1,h:22,
   dbx:{t:"Online Feature Store",k:"Lakebase Postgres, millisecond lookups",d:"Powered by Lakebase. Model Serving looks features up automatically, so the store app only sends store and SKU.",o:"dbx",doc:D.ofs},
@@ -465,6 +489,7 @@ const EDGES = [
  ["stream","bronze","core"],["files","bronze","core"],["cdc","bronze","inv"],
  ["stream","rtc","sales"],["rtc","fs_on","sales"],
  ["bronze","silver","core"],["silver","gold","core"],["gold","fs_off","core"],
+ ["gold","sqlwh","core"],["gold","share","inv"],["sqlwh","genai","genai",{dash:true,lift:90}],
  ["fs_off","fs_on","sales"],["fs_off","train","core"],["train","mlflow","core",{dash:true}],["train","registry","core"],
  ["registry","rt","sales"],["fs_on","rt","sales"],["rt","sales","sales"],
  ["registry","batch","inv"],["batch","inv","inv"],
@@ -476,8 +501,10 @@ const PL = (o) => Object.assign({x0:0.5,x1:8.5,y0:-1.65,y1:1.65,lx:0.6},o);
 const PLANES = {
  dbx:[
   PL({group:"ws",z:150,x0:0.5,x1:7.5,y0:-1.45,y1:1.45,kind:"ws",t:"Databricks workspace + Lakeflow Jobs",d:"Notebooks, SQL editor, pipelines and dashboards in one workspace. Lakeflow Jobs orchestrates ingest, train, score and refresh as one DAG.",doc:D.jobs}),
-  PL({group:"gov",z:-70,kind:"gov",t:"Unity Catalog",d:"One permission model and lineage graph for tables, volumes, features, models, functions and serving endpoints, extended to agents and MCP tools through Unity Gateway. Row filters, column masks and audit.",doc:D.uc}),
-  PL({group:"store",z:-140,kind:"store",lx:1.4,t:"Your Amazon S3, open formats",d:"Delta Lake tables in the customer's own S3 buckets. Compute, serverless or classic, is separate from storage.",doc:null})
+  PL({group:"gov",z:-70,kind:"gov",t:"Unity Catalog",d:"One permission model and lineage graph for tables, volumes, features, models, functions and serving endpoints, extended to agents and MCP tools through Unity Gateway. Row filters, column masks and audit. Catalog federation brings tables still registered in AWS Glue or a Hive metastore under the same permissions.",doc:D.uc}),
+  PL({group:"store",z:-140,kind:"store",lx:1.4,t:"Your Amazon S3, open formats",d:"Delta Lake tables in the customer's own S3 buckets. Compute, serverless or classic, is separate from storage.",doc:null}),
+  PL({group:"found",z:-215,x1:4.45,kind:"found",lx:2.75,t:"Databricks account: identity, cost, CI/CD",d:"SSO and SCIM provisioning from your identity provider, such as Okta or Microsoft Entra ID. System tables for billing, audit and lineage, queried with SQL. Declarative Automation Bundles (formerly Databricks Asset Bundles) deploy jobs, pipelines and endpoints from Git through GitHub Actions or another CI system.",doc:D.bundles}),
+  PL({group:"found",z:-215,x0:4.55,kind:"found",lx:6.3,t:"Your AWS account: keys, network, audit",d:"Customer-managed keys in AWS KMS, a customer-managed VPC with private connectivity, CloudTrail for the S3 side and CloudWatch for the infrastructure. Databricks on AWS runs on this foundation, so this part is shared with the AWS stack.",doc:D.dbxsec})
  ],
  aws:[
   PL({group:"ws",z:150,x0:0.5,x1:4.45,y0:-1.45,y1:1.45,kind:"ws",t:"SageMaker Unified Studio",d:"One IDE that brings together Glue, EMR, Athena, Redshift, MWAA, Bedrock and SageMaker AI.",doc:D.smus}),
@@ -486,15 +513,18 @@ const PLANES = {
   PL({group:"gov",z:-55,kind:"gov",dash:[],lx:0.6,t:"SageMaker Catalog",d:"Discovery, publish and subscribe, data quality and lineage across data and AI assets.",doc:D.smcat}),
   PL({group:"gov",z:-78,kind:"gov",dash:[7,4],lx:3.2,t:"Lake Formation + Glue Data Catalog",d:"Fine-grained table, column and row permissions on S3 data, plus technical metadata.",doc:D.lf}),
   PL({group:"gov",z:-101,kind:"gov",dash:[2,4],lx:6.1,t:"IAM",d:"Who can call Feature Store, training, Model Registry and endpoints.",doc:D.iam}),
-  PL({group:"store",z:-150,kind:"store",lx:1.4,t:"Amazon S3 + S3 Tables",d:"General purpose buckets plus table buckets that store Apache Iceberg tables with automatic compaction.",doc:D.s3t})
+  PL({group:"store",z:-150,kind:"store",lx:1.4,t:"Amazon S3 + S3 Tables",d:"General purpose buckets plus table buckets that store Apache Iceberg tables with automatic compaction.",doc:D.s3t}),
+  PL({group:"found",z:-215,x1:4.45,kind:"found",lx:2.75,t:"IAM Identity Center + KMS + CloudTrail",d:"Workforce sign-in and user sync from your identity provider, encryption keys in KMS, secrets in Secrets Manager, and a CloudTrail record of every API call.",doc:D.idc}),
+  PL({group:"found",z:-215,x0:4.55,kind:"found",lx:6.3,t:"CloudWatch + Cost Explorer + CI/CD",d:"CloudWatch metrics, logs and alarms. Cost Explorer with cost allocation tags. CloudFormation or CDK deployed from GitHub Actions or CodePipeline.",doc:D.costexp})
  ]
 };
 const GROUP_NOTE = {
   ws:"Databricks: one workspace. AWS: Unified Studio covers data and analytics, while Feature Store / Canvas are still in SageMaker AI Studio (stated in the official documentation).",
-  gov:"This is the key difference: on Databricks one set of permissions + lineage traces from the POS table to the endpoint; AWS governance is a combination of three layers that must be kept aligned. Be fair and stick to facts.",
-  store:"On both sides the data sits in the customer's own S3 in open formats. Databricks on AWS does not move the data away; it adds a platform on top of the same S3."
+  gov:"This is the most important difference: on Databricks, one set of permissions and one lineage graph run from the POS table to the endpoint; AWS governance is three layers that have to be kept aligned. Be fair and stick to facts. If the customer already has a Glue Data Catalog, catalog federation can bring it under Unity Catalog first, with tables migrated step by step instead of all at once.",
+  store:"On both sides the data sits in the customer's own S3 in open formats. Databricks on AWS does not move the data away; it adds a platform on top of the same S3.",
+  found:"This matches the bottom band of the official reference architecture: identity, security, monitoring, cost and DevOps. Most of this layer is the same on both stacks: it lives in the customer's own AWS account (KMS, VPC, CloudTrail) and connects to the same identity provider. What Databricks adds is system tables inside the platform (billing, audit and lineage, all queryable with SQL) and Declarative Automation Bundles. On AWS, a consistent tagging scheme is what lets you add up one pipeline's cost across services."
 };
-const GROUP_NAME = {ws:"Where people work and how jobs run", gov:"Governance", store:"Storage"};
+const GROUP_NAME = {ws:"Where people work and how jobs run", gov:"Governance", store:"Storage", found:"Foundation: identity, security, cost, CI/CD"};
 
 /* =====================================================================
    SYNTHETIC DATA: one consistent story through every step.
@@ -668,7 +698,7 @@ job.commit()                                 # saves the bookmark`}
     [["000000000000020871","SG01","0001","1240.000","2026-10-09 14:00:00","2026-10-09 15:30:00"],["000000000000020871","SG01","0001","1180.000","2026-10-09 15:30:00",null],
      ["000000000000031045","TH02","0001","96.000","2026-10-08 17:00:00",null],["000000000000010023","SG01","0001","3310.000","2026-10-09 09:10:00",null]],
     {flags:{0:["closed","old version closed, not overwritten"],1:["hl","current version"]}}),
-  why:"SCD type 2 means every change keeps a version, with __START_AT / __END_AT marking the valid period. Old versions are 'closed' rather than overwritten, so you can answer 'what was the stock at 10 pm last night', which is exactly the history model training needs. Database-based ERPs can use a Lakeflow Connect database connector; for SAP, Delta Sharing through SAP Business Data Cloud is also common in practice, depending on the customer's SAP version.",
+  why:"SCD type 2 means every change keeps a version, with __START_AT / __END_AT marking the valid period. Old versions are 'closed' rather than overwritten, so you can answer 'what was the stock at 10 pm last night', which is exactly the history model training needs. Database-based ERPs can use a Lakeflow Connect database connector; for SAP, OpenSharing (formerly Delta Sharing) through SAP Business Data Cloud is also common in practice, depending on the customer's SAP version.",
   code:{lang:"SQL (Lakeflow pipeline, from a change feed)", text:`CREATE OR REFRESH STREAMING TABLE retail.bronze.sap_mard;
 
 CREATE FLOW sap_mard_cdc AS AUTO CDC INTO retail.bronze.sap_mard
@@ -815,6 +845,81 @@ ON  t.business_date = s.business_date AND t.store_id = s.store_id AND t.sku = s.
 WHEN MATCHED THEN UPDATE SET units = s.units, …
 WHEN NOT MATCHED THEN INSERT (business_date, store_id, sku, units, …)
                       VALUES (s.business_date, s.store_id, s.sku, s.units, …);`}
+  }
+ },
+ sqlwh:{
+  what:"BI and Genie do not read files directly: a SQL engine queries the gold tables, with the governance layer's permissions applied. The question here: how much did the promotion lift sales, and where?",
+  in:GOLD,
+  out:T("Dashboard query: promo uplift per store and SKU (run on a SQL warehouse)",
+    ["store_id|STRING","sku|STRING","units_today|BIGINT||gold.daily_store_sku.units","units_same_day_last_week|INT||feature table: units_lag_7","uplift_pct|DOUBLE||(today − last week) ÷ last week × 100","is_promo|BOOLEAN"],
+    [["SG-ORCH-001","SKU-20871",186,92,102.2,true],["MY-KUL-014","SKU-20871",233,118,97.5,true],["TH-BKK-007","SKU-31045",21,19,10.5,false],["SG-ORCH-001","SKU-10023",64,61,4.9,false]],
+    {flags:{0:["hl","the promo roughly doubles units; the agent quotes 92 → 186 later"]}, foot:"Same numbers a planner sees in an AI/BI dashboard, in Genie, or in Power BI connected to the same warehouse."}),
+  why:"A SQL warehouse is compute built for SQL and BI: serverless, it stops when idle, and Photon is the default engine. Whether the query comes from an AI/BI dashboard, Genie or Power BI, Unity Catalog row filters and column masks apply (see the governance layer), so a Thailand planner still sees only TH. Every query is recorded in system tables, so you can audit who queried what.",
+  code:{lang:"SQL (Databricks SQL warehouse)", text:`SELECT g.store_id, g.sku,
+       g.units                                                   AS units_today,
+       f.units_lag_7                                             AS units_same_day_last_week,
+       ROUND(100.0 * (g.units - f.units_lag_7) / f.units_lag_7, 1) AS uplift_pct,
+       g.is_promo
+FROM retail.gold.daily_store_sku g
+JOIN retail.features.store_sku_daily f USING (store_id, sku, business_date)
+WHERE g.business_date = DATE'2026-10-09'
+ORDER BY uplift_pct DESC;`},
+  aws:{
+   out:T("Dashboard query: promo uplift per store and SKU (Athena)",
+    ["store_id|string","sku|string","units_today|bigint","units_same_day_last_week|bigint||offline feature store: units_lag_7","uplift_pct|double","is_promo|boolean"],
+    [["SG-ORCH-001","SKU-20871",186,92,102.2,true],["MY-KUL-014","SKU-20871",233,118,97.5,true],["TH-BKK-007","SKU-31045",21,19,10.5,false],["SG-ORCH-001","SKU-10023",64,61,4.9,false]],
+    {flags:{0:["hl","same answer, different engine"]}}),
+   why:"Athena runs the same SQL directly on the Iceberg tables and charges by data scanned; high-concurrency dashboards usually move to Redshift Serverless. Lake Formation data cells filters still apply. The difference is the other side of the join: on AWS the features sit in the SageMaker Feature Store offline store (a table in Glue), keyed by the combined store_sku, and it keeps every write, so the query has to pick the latest record itself.",
+   code:{lang:"SQL (Athena)", text:`SELECT g.store_id, g.sku, g.units AS units_today,
+       f.units_lag_7 AS units_same_day_last_week,
+       ROUND(100.0 * (g.units - f.units_lag_7) / f.units_lag_7, 1) AS uplift_pct,
+       g.is_promo
+FROM gold.daily_store_sku g
+JOIN "sagemaker_featurestore"."store_sku_daily_1728461102" f
+  ON f.store_sku = g.store_id || '#' || g.sku
+ AND f.is_deleted = false
+WHERE g.business_date = DATE '2026-10-09'
+ORDER BY uplift_pct DESC;`}
+  }
+ },
+ share:{
+  what:"Share sell-through with a supplier: they query a live table instead of receiving a CSV every day. Supplier A should see only its own SKU, and no revenue.",
+  in:GOLD,
+  out:T("What supplier A sees: retail.share.daily_sku_supplier_a (shared view)",
+    ["business_date|DATE","store_id|STRING","sku|STRING","units|BIGINT","is_promo|BOOLEAN"],
+    [["2026-10-09","SG-ORCH-001","SKU-20871",186,true],["2026-10-09","MY-KUL-014","SKU-20871",233,true]],
+    {flags:{0:["hl","only SKU-20871; net_revenue, currency and txn_count are not shared"]}}),
+  extra:[T("Share objects in Unity Catalog", ["object|STRING","name|STRING","detail|STRING"],
+    [["share","supplier_a","view retail.share.daily_sku_supplier_a"],["recipient","supplier_a_team","open sharing: activation link, no Databricks account needed"],["grant","SELECT ON SHARE supplier_a","to recipient supplier_a_team; revoke to stop sharing"]])],
+  why:"OpenSharing shares tables or views from Unity Catalog. Here a view keeps only the supplier's SKU and drops the revenue columns, and the view is added to a share. The supplier always reads the latest version, with no daily exports; to stop, revoke the recipient. If the supplier also uses Databricks, the table appears directly in its own Unity Catalog.",
+  code:{lang:"SQL (Unity Catalog, OpenSharing)", text:`CREATE VIEW retail.share.daily_sku_supplier_a AS
+SELECT business_date, store_id, sku, units, is_promo
+FROM retail.gold.daily_store_sku
+WHERE sku = 'SKU-20871';
+
+CREATE SHARE supplier_a;
+ALTER SHARE supplier_a ADD VIEW retail.share.daily_sku_supplier_a;
+CREATE RECIPIENT supplier_a_team;          -- open sharing: returns an activation link
+GRANT SELECT ON SHARE supplier_a TO RECIPIENT supplier_a_team;`},
+  aws:{
+   out:T("What supplier A's AWS account sees (resource link to the shared table)",
+    ["business_date|date","store_id|string","sku|string","units|bigint","is_promo|boolean"],
+    [["2026-10-09","SG-ORCH-001","SKU-20871",186,true],["2026-10-09","MY-KUL-014","SKU-20871",233,true]],
+    {flags:{0:["hl","data cells filter: SKU-20871 rows, revenue columns excluded"]}}),
+   extra:[],
+   why:"Lake Formation can grant a table or a data cells filter to another AWS account, delivered through AWS RAM; the supplier creates a resource link and queries it with Athena. This assumes the supplier is on AWS, and both sides manage cross-account permissions. Suppliers outside AWS need another route, such as scheduled file exports.",
+   code:{lang:"Python (boto3, Lake Formation)", text:`lf.create_data_cells_filter(TableData={
+    "TableCatalogId": ACCOUNT_ID, "DatabaseName": "gold",
+    "TableName": "daily_store_sku", "Name": "supplier_a",
+    "RowFilter": {"FilterExpression": "sku = 'SKU-20871'"},
+    "ColumnNames": ["business_date", "store_id", "sku", "units", "is_promo"]})
+
+lf.grant_permissions(
+    Principal={"DataLakePrincipalIdentifier": SUPPLIER_ACCOUNT_ID},
+    Resource={"DataCellsFilter": {"TableCatalogId": ACCOUNT_ID, "DatabaseName": "gold",
+                                  "TableName": "daily_store_sku", "Name": "supplier_a"}},
+    Permissions=["SELECT"])
+# the supplier accepts the AWS RAM invitation, then creates a resource link for Athena`}
   }
  },
  fs_off:{
@@ -1166,9 +1271,53 @@ ALTER TABLE retail.gold.daily_store_sku
      ["Evaluate","ProcessingStep","Train","compute wMAPE"],["Gate","ConditionStep","Evaluate","challenger better?"],["Register","RegisterModel","Gate = true","PendingManualApproval"],["Score","TransformStep","Register","Batch Transform"]]),
    why:"The ML part uses SageMaker Pipelines; the data part is usually Glue workflows, Step Functions or MWAA. The two schedulers have to trigger each other (for example through EventBridge). This is an integration cost to state clearly."
   }
+ },
+ "p:found":{
+  what:"The bottom layer: identity, keys, audit, cost and deployment. The question here: what did each workload cost yesterday?",
+  in:null,
+  out:T("Cost per workload on 2026-10-09, from system.billing.usage",
+    ["usage_date|DATE","workload|STRING||custom_tags['workload'], set on every job, pipeline, warehouse and endpoint","dbus|DECIMAL(38,2)||SUM(usage_quantity) where usage_unit = 'DBU'"],
+    [["2026-10-09","nightly_training",118.20],["2026-10-09","store_endpoint",61.30],["2026-10-09","ingest_pipeline",42.50],["2026-10-09","bi_warehouse",37.90],["2026-10-09","batch_scoring",23.75]],
+    {flags:{0:["hl","many-models training is the biggest line"]}, foot:"Synthetic values. Multiply DBUs by your contract price for cost; the S3, KMS and network charges stay on the AWS bill."}),
+  extra:[X("databricks.yml (Declarative Automation Bundles)", `bundle:
+  name: retail-forecast
+
+resources:
+  jobs:
+    retail_nightly:
+      name: retail_nightly
+      tags: {workload: nightly_training}
+      tasks:
+        - task_key: train
+          notebook_task: {notebook_path: ./src/train_many_models.py}
+
+targets:
+  dev:  {mode: development, default: true}
+  prod: {mode: production}`, [])],
+  why:"On Databricks, cost and audit are tables: system.billing.usage splits usage by custom tag into workloads, and system.access.audit records who changed permissions. Deployment uses Declarative Automation Bundles (formerly Databricks Asset Bundles): jobs, pipelines and endpoints are written as YAML, kept in Git and deployed to dev and prod by CI, with the tags fixed in the same files. Keys (KMS), networking (VPC, private connectivity) and CloudTrail stay in the customer's own AWS account, and this part is shared by both designs.",
+  code:{lang:"SQL (system tables)", text:`SELECT usage_date,
+       custom_tags['workload'] AS workload,
+       SUM(usage_quantity)     AS dbus
+FROM system.billing.usage
+WHERE usage_date = DATE'2026-10-09' AND usage_unit = 'DBU'
+GROUP BY ALL
+ORDER BY dbus DESC;`},
+  aws:{
+   out:T("Cost per workload on 2026-10-09, from Cost Explorer (grouped by the workload tag)",
+    ["usage_date|date","workload|string||cost allocation tag","unblended_cost_usd|decimal(12,2)||Glue, EMR, SageMaker AI, Athena, Flink…"],
+    [["2026-10-09","nightly_training",96.40],["2026-10-09","store_endpoint",52.80],["2026-10-09","ingest_pipeline",38.10],["2026-10-09","bi_queries",21.60],["2026-10-09","batch_scoring",17.25]],
+    {flags:{0:["hl","only adds up if every service was tagged"]}, foot:"Synthetic values. Cost Explorer refreshes at least once every 24 hours."}),
+   extra:[],
+   why:"On AWS, cost is in Cost Explorer, split by cost allocation tags and refreshed at least once every 24 hours; audit is in CloudTrail; deployment uses CloudFormation or CDK. One pipeline's cost is spread across the Glue, EMR, SageMaker AI, Athena and Flink line items, so agree on a tagging scheme from the start or the numbers will not add up.",
+   code:{lang:"Python (boto3, Cost Explorer)", text:`ce.get_cost_and_usage(
+    TimePeriod={"Start": "2026-10-09", "End": "2026-10-10"},
+    Granularity="DAILY",
+    Metrics=["UnblendedCost"],
+    GroupBy=[{"Type": "TAG", "Key": "workload"}])`}
+  }
  }
 };
-const STEP_ORDER = ["pos","ext","erp","stream","files","cdc","bronze","silver","gold","fs_off","rtc","fs_on","train","mlflow","registry","batch","inv","rt","sales","monitor","genai","p:gov","p:store","p:ws"];
+const STEP_ORDER = ["pos","ext","erp","stream","files","cdc","bronze","silver","gold","sqlwh","share","fs_off","rtc","fs_on","train","mlflow","registry","batch","inv","rt","sales","monitor","genai","p:gov","p:store","p:ws","p:found"];
 
 /* ---------- state ---------- */
 const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
@@ -1210,7 +1359,7 @@ function computeFit(){
   // what is actually drawn: deck + stage headers, workspace frame above, storage floor below
   for (const s of [-1.9, 8.7]) for (const l of [-2.0, 2.25]) pts.push(proj(wpt(s,l,0),1,0,0,1));
   for (const s of [0.5, 7.5]) for (const l of [-1.45, 1.45]) pts.push(proj(wpt(s,l,150),1,0,0,1));
-  for (const s of [0.5, 8.5]) for (const l of [-1.65, 1.65]) pts.push(proj(wpt(s,l,-150),1,0,0,1));
+  for (const s of [0.5, 8.5]) for (const l of [-1.65, 1.65]) pts.push(proj(wpt(s,l,-215),1,0,0,1));
   cam.yaw = y; cam.pitch = pi;
   const xs = pts.map(p=>p.x), ys = pts.map(p=>p.y);
   const w = Math.max(...xs)-Math.min(...xs) + (portrait ? 40 : 120), h = (Math.max(...ys)-Math.min(...ys)) + 90; // room for labels
@@ -1257,6 +1406,7 @@ function drawPlane(pl){
   let fill, stroke, dash = pl.dash || [];
   if (pl.kind==="gov"){ const c = state.plat==="dbx" ? OWN.dbx.color : OWN.aws.color; fill = rgba(c, state.plat==="dbx"?0.11:0.075); stroke = rgba(state.plat==="dbx"?c:"#B86E00", 0.75); }
   else if (pl.kind==="store"){ fill = "rgba(91,104,117,0.10)"; stroke = "rgba(91,104,117,0.5)"; }
+  else if (pl.kind==="found"){ fill = "rgba(15,118,110,0.07)"; stroke = "rgba(15,118,110,0.55)"; dash = [2,3]; }
   else { fill = "rgba(22,33,44,0.035)"; stroke = "rgba(22,33,44,0.45)"; dash = [6,5]; }
   const selected = state.sel && state.sel.kind==="plane" && state.sel.group===pl.group;
   polyPath(pts); ctx.fillStyle = fill; ctx.fill();
@@ -1272,6 +1422,7 @@ function planeLabel(pl){
   rr(x, y, w, h, 4);
   if (pl.kind==="gov"){ ctx.fillStyle = state.plat==="dbx" ? "#C9260F" : "#232F3E"; }
   else if (pl.kind==="store"){ ctx.fillStyle = "#5B6875"; }
+  else if (pl.kind==="found"){ ctx.fillStyle = "#0F766E"; }
   else { ctx.fillStyle = "rgba(255,255,255,0.95)"; }
   ctx.fill();
   if (pl.kind==="ws"){ ctx.strokeStyle = "rgba(22,33,44,0.5)"; ctx.lineWidth = 1; ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]); }
@@ -1516,9 +1667,11 @@ function setPlat(p){
 }
 function renderLayers(){
   const el = document.getElementById("layers");
-  const order = {ws:0, gov:1, store:2};
-  el.innerHTML = PLANES[state.plat].slice().sort((a,b)=>order[a.kind]-order[b.kind])
-    .map(pl => `<button type="button" class="${pl.kind} ${state.plat}" data-group="${pl.group}">${pl.t}</button>`).join("");
+  const order = {ws:0, gov:1, store:2, found:3};
+  // one button per layer (a layer can be several slabs on AWS); short names so the bar stays on one or two rows
+  const SHORT = {ws:"Workspace and jobs", gov:"Governance", store:"Storage", found:"Foundation"};
+  const groups = [...new Set(PLANES[state.plat].map(pl => pl.group))].sort((a,b)=>order[a]-order[b]);
+  el.innerHTML = groups.map(g => `<button type="button" class="${g} ${state.plat}" data-group="${g}" title="${PLANES[state.plat].filter(pl=>pl.group===g).map(pl=>pl.t).join(" · ")}">${SHORT[g]}</button>`).join("");
   el.querySelectorAll("button").forEach(b => b.addEventListener("click", () => select({kind:"plane", group:b.dataset.group})));
 }
 function select(sel){
@@ -1538,7 +1691,7 @@ function renderPanel(){
     panel.innerHTML = `
       <h2>How to read it</h2>
       <p>Each box is one step of the same pipeline. Switch between Databricks and AWS above: the boxes stay where they are and the components change, so you can compare one step at a time.</p>
-      <p>The colour of a box shows who provides it. The floors under the deck are governance and storage, and the dashed frame above is where people work and how jobs are orchestrated.</p>
+      <p>The colour of a box shows who provides it. The floors under the deck are governance, storage and, at the bottom, the foundation (identity, security, cost and CI/CD). The dashed frame above is where people work and how jobs are orchestrated.</p>
       <h3>The key difference</h3>
       <p><b>Databricks:</b> one platform runs ingest, pipelines, features, training, serving and monitoring, and one catalog governs all of it, down to models, endpoints and agent tools.</p>
       <p><b>AWS:</b> you compose purpose-built services. Governance spans SageMaker Catalog, Lake Formation with the Glue Data Catalog, and IAM, and Feature Store and Canvas are used from SageMaker AI Studio rather than Unified Studio.</p>
@@ -1589,7 +1742,7 @@ function buildTable(){
     lastS = n.s;
   }
   rows.push(`<tr class="grouprow"><td colspan="4">Layers under and over every step</td></tr>`);
-  for (const g of ["ws","gov","store"]){
+  for (const g of ["ws","gov","store","found"]){
     const t = pl => PLANES[pl].filter(x=>x.group===g).map(x=>`<span class="nm">${x.t}</span><span class="ds">${x.d}</span>${x.doc?`<a href="${x.doc}" target="_blank" rel="noopener">Official doc</a>`:""}`).join("<br>");
     rows.push(`<tr><td><b>${GROUP_NAME[g]}</b></td><td>${t("dbx")}</td><td>${t("aws")}</td><td>${GROUP_NOTE[g]}</td></tr>`);
   }
@@ -1607,7 +1760,12 @@ function buildSources(){
     ["Databricks: Unity Gateway inference tables", D.infTables],["Databricks: inference tables for serving endpoints (legacy schema)", D.infTablesLegacy],
     ["Databricks: Data profiling", D.profiling],["Databricks: Data profiling metric tables", D.profOut],["Databricks: Query serving endpoints (dataframe_records)", D.scoreEp],
     ["AWS: SageMaker Canvas time-series forecasts", D.canvasTs],["AWS: Amazon Forecast (closed to new customers)", D.forecast],["AWS: Amazon Bedrock AgentCore", D.agentcore],["AWS: Amazon Quick", D.quick],
-    ["AWS: Model Monitor availability change (closed to new customers)", D.mmAvail],["AWS: Data Capture", D.dataCapture],["AWS: Feature Store concepts", D.fsConcepts],["AWS: Feature Store offline store format", D.fsOffline]
+    ["AWS: Model Monitor availability change (closed to new customers)", D.mmAvail],["AWS: Data Capture", D.dataCapture],["AWS: Feature Store concepts", D.fsConcepts],["AWS: Feature Store offline store format", D.fsOffline],
+    ["Databricks: SQL warehouses", D.sqlwh],["Databricks: Photon", D.photon],["Databricks: OpenSharing (formerly Delta Sharing)", D.share],
+    ["Databricks: Lakehouse Federation", D.fed],["Databricks: Catalog federation", D.catfed],["Databricks: System tables", D.systables],
+    ["Databricks: Declarative Automation Bundles", D.bundles],["Databricks: Security and compliance", D.dbxsec],["Databricks: SCIM provisioning", D.scim],
+    ["AWS: Amazon Athena", D.athena],["AWS: Amazon Redshift", D.redshift],["AWS: Lake Formation cross-account data sharing", D.lfShare],
+    ["AWS: IAM Identity Center", D.idc],["AWS: Cost Explorer", D.costexp]
   ];
   document.getElementById("srcList").innerHTML = opened.map(([t,u])=>`<li><a href="${u}" target="_blank" rel="noopener">${t}</a></li>`).join("");
 }

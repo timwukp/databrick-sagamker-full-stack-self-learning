@@ -1,0 +1,6 @@
+usage_date,workload,unblended_cost_usd
+2026-10-09,nightly_training,96.4
+2026-10-09,store_endpoint,52.8
+2026-10-09,ingest_pipeline,38.1
+2026-10-09,bi_queries,21.6
+2026-10-09,batch_scoring,17.25

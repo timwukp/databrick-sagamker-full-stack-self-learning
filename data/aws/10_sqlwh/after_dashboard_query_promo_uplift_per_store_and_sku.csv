@@ -1,0 +1,5 @@
+store_id,sku,units_today,units_same_day_last_week,uplift_pct,is_promo
+SG-ORCH-001,SKU-20871,186,92,102.2,true
+MY-KUL-014,SKU-20871,233,118,97.5,true
+TH-BKK-007,SKU-31045,21,19,10.5,false
+SG-ORCH-001,SKU-10023,64,61,4.9,false

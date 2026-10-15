@@ -1,0 +1,15 @@
+bundle:
+  name: retail-forecast
+
+resources:
+  jobs:
+    retail_nightly:
+      name: retail_nightly
+      tags: {workload: nightly_training}
+      tasks:
+        - task_key: train
+          notebook_task: {notebook_path: ./src/train_many_models.py}
+
+targets:
+  dev:  {mode: development, default: true}
+  prod: {mode: production}

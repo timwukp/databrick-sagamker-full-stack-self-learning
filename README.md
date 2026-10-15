@@ -16,8 +16,9 @@ Work through the site once and you should be able to:
 
 - **walk the whole pipeline** — sources → ingest → bronze → silver → gold → features → train and register → serve → use — and name the Databricks and the AWS component at each step;
 - **read the data at every step** — what the raw POS JSON, the Kafka record, the bronze row, the silver line and the gold aggregate actually look like, and which columns were added, retyped or removed;
+- **see the parts around the pipeline** — a SQL engine for BI (SQL warehouse vs Athena or Redshift), sharing data with suppliers (OpenSharing vs Lake Formation cross-account sharing), federation for systems you do not ingest, and the foundation of identity, keys, audit, cost and CI/CD;
 - **spot the platform differences that matter** — Delta vs Iceberg types, Auto Loader's default `STRING` inference and `_rescued_data`, SCD type 2 vs DMS `Op` columns, Feature Store record identifiers, automatic feature lookup vs `GetRecord`, one Unity Catalog vs three governance layers;
-- **avoid the common mistakes** — outdated names (DLT, Lakehouse Monitoring, SageMaker Experiments), wrong data flows (Kafka into Auto Loader) and retired services (Amazon Forecast and SageMaker Model Monitor are closed to new customers);
+- **avoid the common mistakes** — outdated names (DLT, Lakehouse Monitoring, Delta Sharing — now OpenSharing, SageMaker Experiments), wrong data flows (Kafka into Auto Loader) and retired services (Amazon Forecast and SageMaker Model Monitor are closed to new customers);
 - **run part of it yourself** on Databricks Free Edition with the same five POS events.
 
 ## What is on the site
@@ -92,7 +93,7 @@ bash scripts/publish.sh --direct   # later runs: fast-forward main instead
 bash scripts/publish.sh --dry-run  # list the files, change nothing
 ```
 
-The script runs `verify.py` and a secret scan first, uploads one blob per file (tab-separated list, so paths with spaces work), bootstraps an empty repository through the Contents API (the Git Data API returns 409 on an empty repo), signs the commit with the account's noreply address, and enables Pages on `main /`.
+The script runs `verify.py` and a secret scan first, uploads one blob per file (tab-separated list, so paths with spaces work), bootstraps an empty repository through the Contents API (the Git Data API returns 409 on an empty repo), signs the commit with the account's noreply address, and enables Pages on `main /`. On later runs it also deletes files that exist on `main` but no longer exist locally (for example when steps are renumbered), so the repository mirrors this folder; the pull request shows them as deletions.
 
 ## About the data
 

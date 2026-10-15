@@ -1,0 +1,4 @@
+object,name,detail
+share,supplier_a,view retail.share.daily_sku_supplier_a
+recipient,supplier_a_team,"open sharing: activation link, no Databricks account needed"
+grant,SELECT ON SHARE supplier_a,to recipient supplier_a_team; revoke to stop sharing
